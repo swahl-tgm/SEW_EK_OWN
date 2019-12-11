@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<GridPane xmlns="http://javafx.com/javafx"
+          xmlns:fx="http://javafx.com/fxml"
+          fx:controller="client.ClientController"
+          fx:id="root"
+          alignment="CENTER" hgap="0" vgap="0">
+    <padding><Insets top="20" right="20" bottom="10" left="20"/></padding>
+    <GridPane xmlns="http://javafx.com/javafx"
+              xmlns:fx="http://javafx.com/fxml"
+              fx:controller="client.ClientController"
+              fx:id="root"
+              alignment="CENTER" hgap="0" vgap="0">
+    </GridPane>
+</GridPane>
