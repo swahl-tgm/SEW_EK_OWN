@@ -4,10 +4,18 @@ import javafx.scene.layout.GridPane;
 import client.GUI.Ships.*;
 
 import javax.imageio.plugins.tiff.TIFFDirectory;
+import javax.net.ssl.HostnameVerifier;
 import java.util.LinkedList;
 
 public class ClientModel
 {
+
+    private static final int VERTICAL = 1;
+    private static final int HORIZONTAL = 0;
+
+    private static final int LEFT = 0;
+    private static final int RIGHT = 1;
+
 
 
     private Ship[][] ships; // [0]: Schlachtschiff, [1]: Kreuzer, [2]: Fregatten, [3]: Minisuchboot
@@ -77,8 +85,237 @@ public class ClientModel
         actualGridEnm = new Tile[10][10];
     }
 
-    public void removeShip(int x, int y) {
+    /**
+     * @param type 0: most left tile, 1: most right tile
+     * @param currentTile
+     * @return
+     */
+    private Tile find ( int type, Tile currentTile ) {
+        if ( type == LEFT ) {
+            // find most left tile
+            Tile leftTile;
+            if ( currentTile.getBeforeTile() != null ) {
+                leftTile = currentTile.getBeforeTile();
+                while ( true ) {
+                    if ( leftTile.getBeforeTile() == null ) {
+                        break;
+                    }
+                    leftTile = leftTile.getBeforeTile();
+                }
+            }
+            else {
+                leftTile = currentTile;
+            }
+            return leftTile;
+        }
+        else {
+            Tile rightTile;
+            if ( currentTile.getNextTile() != null ) {
+                rightTile = currentTile.getNextTile();
+                while ( true ) {
+                    if ( rightTile.getNextTile() == null ) {
+                        break;
+                    }
+                    rightTile = rightTile.getNextTile();
+                }
+            }
+            else {
+                rightTile = currentTile;
+            }
+            return rightTile;
+        }
+    }
 
+    /**
+     * Dreht das Schiff von vertical auf horizontal oder umgekehrt, wenn der weg unten blokiert ist, dann nicht
+     * @param currentTile
+     */
+    public void turnShip( Tile currentTile ) {
+        System.out.println("Start");
+        // find most left tile
+        Tile leftTile = find(LEFT, currentTile);
+        // find most right tile
+        Tile rightTile = find(RIGHT, currentTile);
+
+        // measure distance
+        int len;
+        int orentation; // 0: horizontal, 1: vertical
+        if ( rightTile.getX() == leftTile.getX() ) {
+            len = rightTile.getY() - leftTile.getY() +1;
+            orentation = VERTICAL;
+        }
+        else {
+            len = rightTile.getX() - leftTile.getX() + 1;
+            orentation = HORIZONTAL;
+        }
+        if ( len > 1 ) {
+            // also could be lowerst tile
+            Tile workTile = rightTile;
+            if ( orentation == VERTICAL ) {
+                if ( checkFree( leftTile, len, VERTICAL ) )
+                {
+                    for ( int j = len-1; j > 0; j-- ) {
+                        Tile after = null;
+                        Tile before = this.actualGridEig[workTile.getX()+j-2][workTile.getY()-j-1];
+                        if ( j != len-1) {
+                            after = this.actualGridEig[workTile.getX()+j][workTile.getY()-j-1];
+                        }
+                        this.actualGridEig[workTile.getX()+j-1][workTile.getY()-j-1].setHasShip(true, after, before, workTile.getShipArrayIndex());
+
+                        Tile temp = workTile.getBeforeTile();
+                        workTile.setHasShip(false, null, null, -1);
+                        workTile = temp;
+
+
+                    }
+                    // set first elment
+                    this.actualGridEig[workTile.getX()-1][workTile.getY()-1].setHasShip(true, this.actualGridEig[workTile.getX()][workTile.getY()-1], null, this.actualGridEig[workTile.getX()][workTile.getY()-1].getShipArrayIndex());
+                }
+            }
+            else {
+                if ( checkFree( leftTile, len, HORIZONTAL) ) {
+                    for ( int j = len-1; j > 0; j-- ) {
+                        Tile after = null;
+                        Tile before = this.actualGridEig[workTile.getX()-j-1][workTile.getY()+j-2];
+                        if ( j != len-1) {
+                            after = this.actualGridEig[workTile.getX()-j-1][workTile.getY()+j];
+                        }
+                        this.actualGridEig[workTile.getX()-j-1][workTile.getY()+j-1].setHasShip(true, after, before, workTile.getShipArrayIndex());
+
+                        Tile temp = workTile.getBeforeTile();
+                        workTile.setHasShip(false, null, null, -1);
+                        workTile = temp;
+
+                    }
+                    // set first elment
+                    this.actualGridEig[workTile.getX()-1][workTile.getY()-1].setHasShip(true, this.actualGridEig[workTile.getX()-1][workTile.getY()], null, this.actualGridEig[workTile.getX()-1][workTile.getY()].getShipArrayIndex());
+                }
+            }
+        }
+    }
+
+    private void setShipsBorder() {
+        for ( Ship[] shipsArr: this.ships) {
+            for ( Ship ship : shipsArr ) {
+                if ( ship.isPlaced() ) {
+                    int x = ship.getStartX();
+                    int y = ship.getStartY();
+
+                    int endX = ship.getEndX();
+                    int endY = ship.getEndY();
+
+                    int len = ship.getLength();
+
+                    int orientation;
+
+                    if ( x == endX ) {
+                        orientation = VERTICAL;
+                    }
+                    else {
+                        orientation = HORIZONTAL;
+                    }
+
+                    for ( int i = 0; i < len; i++ ) {
+
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean checkFree( Tile leftTile, int len, int orientation ) {
+        boolean out = true;
+        if ( orientation == HORIZONTAL ) {
+            // goes from horizontal to vertical
+            if ( leftTile.getY()-2+len >= 10 ) {
+                return false;
+            }
+        }
+        else {
+            // Vertical
+            // goes from vertical to horizontal
+            if ( leftTile.getX()-2+len >= 10 ) {
+                return false;
+            }
+        }
+        boolean rep = true;
+        for ( int i = 1; i < len+1 && rep; i++) {
+            if ( orientation == HORIZONTAL ) {
+                // goes from horizontal to vertical
+                if ( leftTile.getY()+i-1 < 10  ) {
+                    if ( this.actualGridEig[leftTile.getX()-1][leftTile.getY()+i-1].isHasShip() ) {
+                        out = false;
+
+                        rep = false;
+                    }
+                    if ( leftTile.getX()-2 > 0 && this.actualGridEig[leftTile.getX()-2][leftTile.getY()+i-1].isHasShip()) {
+                        out = false;
+
+                        rep = false;
+                    }
+                    if ( leftTile.getX() < 10 && this.actualGridEig[leftTile.getX()][leftTile.getY()+i-1].isHasShip()) {
+                        out = false;
+
+                        rep = false;
+                    }
+                }
+
+            }
+            else {
+                // Vertical
+                // goes from vertical to horizontal
+                if ( leftTile.getX()+i-1 < 10 ) {
+                    if ( this.actualGridEig[leftTile.getX()+i-1][leftTile.getY()-1].isHasShip() ) {
+                        out = false;
+                        break;
+                    }
+                    if ( leftTile.getY()-2 > 0 && this.actualGridEig[leftTile.getX()+i-1][leftTile.getY()-2].isHasShip()) {
+                        out = false;
+
+                        rep = false;
+                    }
+                    if ( leftTile.getY() < 10 && this.actualGridEig[leftTile.getX()+i-1][leftTile.getY()].isHasShip()) {
+                        out = false;
+
+                        rep = false;
+                    }
+                }
+            }
+        }
+
+        return out;
+    }
+
+    public ShipEnum removeShip( Tile currentTile ) {
+        Tile leftTile = find(0, currentTile);
+        int index = leftTile.getShipArrayIndex();
+        int len = 0;
+        while ( true ) {
+            if ( leftTile.getNextTile() == null ) {
+                leftTile.setHasShip(false, null, null, -1);
+                len++;
+                break;
+            }
+            Tile temp = leftTile.getNextTile();
+            leftTile.setHasShip(false, null, null, -1);
+            leftTile = temp;
+            len++;
+        }
+        switch ( len ) {
+            case 4:
+                this.ships[0][index].setPlaced(false);
+                return ShipEnum.Schlachtschiff;
+            case 3:
+                this.ships[1][index].setPlaced(false);
+                return ShipEnum.Kreuzer;
+            case 2:
+                this.ships[2][index].setPlaced(false);
+                return ShipEnum.Fragette;
+            case 1:
+                this.ships[3][index].setPlaced(false);
+                return ShipEnum.Minisuchboot;
+        }
+        return null;
     }
 
     public void addShip( ShipEnum which, int x, int y ) {
@@ -112,11 +349,13 @@ public class ClientModel
 
     private void setShipCord ( Ship[] arr, int x, int y, int len) {
         Ship toEdit = null;
+        int ind = 0;
         for (Ship ship : arr) {
             if (!ship.isPlaced()) {
                 toEdit = ship;
                 break;
             }
+            ind++;
         }
 
         if ( toEdit != null ) {
@@ -127,18 +366,23 @@ public class ClientModel
             toEdit.setPlaced(true);
 
             for (int i = x-1; i < x + len-1; i++ ) {
-                System.out.println(i);
                 Tile before = null;
-                System.out.println("Before: " + (i-2));
-                if ( i-2 >= 0 ) {
-                    before = this.actualGridEig[i-2][y-1];
+                if ( i-1 >= x-1 ) {
+                    System.out.println("Before: x: " + i + ", y: " + y);
+                    before = this.actualGridEig[i-1][y-1];
+                }
+                else {
+                    System.out.println("Before null");
                 }
                 Tile after = null;
-                System.out.println("After: " + i);
-                if ( i < 10 ) {
-                    after = this.actualGridEig[i][y-1];
+                if ( i+1 < x + len-1 ) {
+                    System.out.println("After: x: " + (i+2) + ", y: " + (y));
+                    after = this.actualGridEig[i+1][y-1];
                 }
-                this.actualGridEig[i][y-1].setHasShip(true, after, before );
+                else {
+                    System.out.println("After null");
+                }
+                this.actualGridEig[i][y-1].setHasShip(true, after, before, ind);
             }
         }
 

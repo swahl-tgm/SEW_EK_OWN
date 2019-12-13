@@ -5,6 +5,7 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
@@ -53,21 +54,36 @@ public class ClientController implements Initializable, EventHandler {
     private Text enmText;
 
 
-    private void ownTileClicked( Tile currentTile ) {
+    private void ownTileClicked( Tile currentTile, MouseEvent mouseEvent ) {
         if ( actv != ShipEnum.KeinBoot ) {
+            ShipEnum tempEnm = actv;
             model.addShip(actv, currentTile.getX(), currentTile.getY());
-            resetText();
             dismissActive();
+            resetText(tempEnm, -1);
         }
-        if ( currentTile.isHasShip() ) {
-            model.removeShip(currentTile.getX(), currentTile.getY());
+        else {
+            if ( currentTile.isHasShip() ) {
+                if (mouseEvent.getButton() == MouseButton.PRIMARY)
+                {
+                    ShipEnum currentDeleted = model.removeShip(currentTile);
+                    resetText(currentDeleted, 1);
+                    // Only temp, will bi changed in dismissActive
+                    actv = currentDeleted;
+                    dismissActive();
+
+                } else if (mouseEvent.getButton() == MouseButton.SECONDARY)
+                {
+                    model.turnShip(currentTile);
+                }
+            }
         }
+
     }
+
 
     private void deactivateAddShipField( ShipEnum which) {
         switch ( which ) {
             case Schlachtschiff:
-                System.out.println("Deaktivieren");
                 for (ShipAddTile tile: schlachtTiles) {
                     tile.setDeactivated();
                 }
@@ -90,25 +106,25 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
-    private void resetText() {
+    private void resetText( ShipEnum which, int change ) {
         int anz;
-        switch ( actv ) {
+        switch ( which ) {
             case Schlachtschiff:
-                anz = Integer.parseInt(schlachtText.getText().substring(0,1))-1;
+                anz = Integer.parseInt(schlachtText.getText().substring(0,1))+change;
                 this.schlachtText.setText(anz + "x Schlachtschiff");
                 if ( anz == 0 ) {
                     deactivateAddShipField(ShipEnum.Schlachtschiff);
                 }
                 break;
             case Kreuzer:
-                anz = Integer.parseInt(kreuzerText.getText().substring(0,1))-1;
+                anz = Integer.parseInt(kreuzerText.getText().substring(0,1))+change;
                 this.kreuzerText.setText(anz + "x Kreuzer");
                 if ( anz == 0 ) {
                     deactivateAddShipField(ShipEnum.Kreuzer);
                 }
                 break;
             case Fragette:
-                anz = Integer.parseInt(fragText.getText().substring(0,1))-1;
+                anz = Integer.parseInt(fragText.getText().substring(0,1))+change;
                 if ( anz == 1 ) {
                     this.fragText.setText(anz + "x Fragette");
                 }
@@ -120,7 +136,7 @@ public class ClientController implements Initializable, EventHandler {
                 }
                 break;
             case Minisuchboot:
-                anz = Integer.parseInt(miniText.getText().substring(0,1))-1;
+                anz = Integer.parseInt(miniText.getText().substring(0,1))+change;
                 this.miniText.setText(anz + "x Minisuchb");
                 if ( anz == 1 ) {
                     this.miniText.setText(anz + "x Minisuchboot");
@@ -129,7 +145,7 @@ public class ClientController implements Initializable, EventHandler {
                     this.miniText.setText(anz + "x Minisuchboote");
                 }
                 if ( anz == 0 ) {
-                    deactivateAddShipField(ShipEnum.Kreuzer);
+                    deactivateAddShipField(ShipEnum.Minisuchboot);
                 }
                 break;
         }
@@ -154,7 +170,7 @@ public class ClientController implements Initializable, EventHandler {
                     public void handle(MouseEvent mouseEvent) {
                         Tile currentTile = (Tile)mouseEvent.getSource();
 
-                        ownTileClicked(currentTile);
+                        ownTileClicked(currentTile, mouseEvent);
                     }
                 });
                 enmClick[i][j].setOnMouseClicked(new EventHandler<MouseEvent>() {

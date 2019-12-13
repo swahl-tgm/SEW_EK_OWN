@@ -19,10 +19,13 @@ public class ShipAddTile extends StackPane {
     }
 
     public void setDismissed() {
+        System.out.println("Teest");
         border.setFill(Color.color(130.0/255,130.0/255,130.0/255,1));
     }
 
     public void setDeactivated() {
+        System.out.println("Hollas");
         border.setFill(Color.color(220.0/255,220.0/255,220.0/255,1));
     }
+
 }
