@@ -55,14 +55,21 @@ public class ClientController implements Initializable, EventHandler {
 
 
     private void ownTileClicked( Tile currentTile, MouseEvent mouseEvent ) {
+        System.out.println("Selected: " +actv);
         if ( actv != ShipEnum.KeinBoot ) {
-            if ( model.addShip(actv, currentTile.getX(), currentTile.getY()) ) {
-                ShipEnum tempEnm = actv;
-                this.model.setShipsBorder(false);
-                // first ship added
-                this.model.setFirstShipAdded(true);
-                dismissActive();
-                resetText(tempEnm, -1);
+            if ( currentTile.isHasShip() ) {
+                ShipEnum shipEnum = actv;
+                actv = ShipEnum.KeinBoot;
+                ownTileClicked(currentTile, mouseEvent);
+            }
+            else {
+                if ( model.addShip(actv, currentTile.getX(), currentTile.getY()) ) {
+                    ShipEnum tempEnm = actv;
+                    this.model.setShipsBorder(true);
+                    // first ship added
+                    this.model.setFirstShipAdded(true);
+                    resetText(tempEnm, -1);
+                }
             }
         }
         else {
@@ -71,12 +78,16 @@ public class ClientController implements Initializable, EventHandler {
                 {
                     ShipEnum currentDeleted = model.removeShip(currentTile);
                     resetText(currentDeleted, 1);
+                    this.model.cleanGridFromRed();
                     // Only temp, will bi changed in dismissActive
                     actv = currentDeleted;
-                    dismissActive();
-
+                    dismissActive(actv);
+                    actv = currentDeleted;
+                    setActivated();
+                    model.setShipsBorder(true);
                 } else if (mouseEvent.getButton() == MouseButton.SECONDARY)
                 {
+                    this.model.cleanGridFromRed();
                     model.turnShip(currentTile);
                 }
             }
@@ -110,25 +121,62 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
-    private void resetText( ShipEnum which, int change ) {
-        int anz;
+    private void resetTile( ShipEnum which ) {
         switch ( which ) {
             case Schlachtschiff:
-                anz = Integer.parseInt(schlachtText.getText().substring(0,1))+change;
+                for (ShipAddTile tile : this.schlachtTiles) {
+                    tile.setDismissed();
+                }
+                break;
+            case Kreuzer:
+                for (ShipAddTile tile : this.kreuzTiles) {
+                    tile.setDismissed();
+                }
+                break;
+            case Fragette:
+                for (ShipAddTile tile : this.fragTiles) {
+                    tile.setDismissed();
+                }
+                break;
+            case Minisuchboot:
+                for (ShipAddTile tile : this.miniTiles) {
+                    tile.setDismissed();
+                }
+                break;
+        }
+    }
+
+    private void resetText( ShipEnum which, int change ) {
+        int anz = 0;
+        switch ( which ) {
+            case Schlachtschiff:
+                anz = Integer.parseInt(schlachtText.getText().substring(0,1));
+                if ( anz == 0 ) {
+                    resetTile(which);
+                }
+                anz += change;
                 this.schlachtText.setText(anz + "x Schlachtschiff");
                 if ( anz == 0 ) {
                     deactivateAddShipField(ShipEnum.Schlachtschiff);
                 }
                 break;
             case Kreuzer:
-                anz = Integer.parseInt(kreuzerText.getText().substring(0,1))+change;
+                anz = Integer.parseInt(kreuzerText.getText().substring(0,1));
+                if ( anz == 0 ) {
+                    resetTile(which);
+                }
+                anz += change;
                 this.kreuzerText.setText(anz + "x Kreuzer");
                 if ( anz == 0 ) {
                     deactivateAddShipField(ShipEnum.Kreuzer);
                 }
                 break;
             case Fragette:
-                anz = Integer.parseInt(fragText.getText().substring(0,1))+change;
+                anz = Integer.parseInt(fragText.getText().substring(0,1));
+                if ( anz == 0 ) {
+                    resetTile(which);
+                }
+                anz += change;
                 if ( anz == 1 ) {
                     this.fragText.setText(anz + "x Fragette");
                 }
@@ -140,7 +188,11 @@ public class ClientController implements Initializable, EventHandler {
                 }
                 break;
             case Minisuchboot:
-                anz = Integer.parseInt(miniText.getText().substring(0,1))+change;
+                anz = Integer.parseInt(miniText.getText().substring(0,1));
+                if ( anz == 0 ) {
+                    resetTile(which);
+                }
+                anz += change;
                 this.miniText.setText(anz + "x Minisuchb");
                 if ( anz == 1 ) {
                     this.miniText.setText(anz + "x Minisuchboot");
@@ -152,6 +204,9 @@ public class ClientController implements Initializable, EventHandler {
                     deactivateAddShipField(ShipEnum.Minisuchboot);
                 }
                 break;
+        }
+        if ( anz == 0 ) {
+            this.model.setShipsBorder(false);
         }
     }
 
@@ -254,71 +309,157 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
-    @Override
-    public void handle(Event event) {
-        int id = Integer.parseInt(((ShipAddTile)event.getSource()).getId());
-        if ( actv != ShipEnum.KeinBoot ) {
-            dismissActive();
-        }
+    private ShipEnum getEnumToId( int id ){
+        ShipEnum out = ShipEnum.KeinBoot;
         switch (id ) {
             case 4:
                 // schlachtschiff
-                if ( this.model.setCopy(0)) {
-                    for (ShipAddTile tile : this.schlachtTiles) {
-                        tile.setClicked();
-                        actv = ShipEnum.Schlachtschiff;
-                    }
-                }
+                out = ShipEnum.Schlachtschiff;
                 break;
             case 3:
-                if ( this.model.setCopy(1)) {
-                    for (ShipAddTile tile : this.kreuzTiles) {
-                        tile.setClicked();
-                        actv = ShipEnum.Kreuzer;
-                    }
-                }
+                out = ShipEnum.Kreuzer;
                 break;
             case 2:
-                if ( this.model.setCopy(2)) {
-                    for (ShipAddTile tile : this.fragTiles) {
-                        tile.setClicked();
-                        actv = ShipEnum.Fragette;
-                    }
-                }
+                out = ShipEnum.Fragette;
                 break;
             case 1:
+                out = ShipEnum.Minisuchboot;
+                break;
+        }
+
+        return out;
+    }
+
+    private void setActivated() {
+        boolean setRed = true;
+        boolean setWhite = false;
+        switch ( actv ) {
+            case Schlachtschiff:
+                // schlachtschiff
+                if ( this.model.setCopy(0)) {
+                    for (ShipAddTile tile : this.schlachtTiles) {
+                        if ( tile.isSet()) {
+                            tile.setDismissed();
+                            setWhite = true;
+                            actv = ShipEnum.KeinBoot;
+                        }
+                        else {
+                            tile.setClicked();
+                            actv = ShipEnum.Schlachtschiff;
+                        }
+                    }
+                }
+                else {
+                    setRed = false;
+                }
+                break;
+            case Kreuzer:
+                if ( this.model.setCopy(1)) {
+                    for (ShipAddTile tile : this.kreuzTiles) {
+                        if ( tile.isSet()) {
+                            tile.setDismissed();
+                            setWhite = true;
+                            actv = ShipEnum.KeinBoot;
+                        }
+                        else {
+                            tile.setClicked();
+                            actv = ShipEnum.Kreuzer;
+                        }
+                    }
+                }
+                else {
+                    setRed = false;
+                }
+                break;
+            case Fragette:
+                if ( this.model.setCopy(2)) {
+                    for (ShipAddTile tile : this.fragTiles) {
+                        if ( tile.isSet()) {
+                            tile.setDismissed();
+                            setWhite = true;
+                            actv = ShipEnum.KeinBoot;
+                        }
+                        else {
+                            tile.setClicked();
+                            actv = ShipEnum.Fragette;
+                        }
+                    }
+                }
+                else {
+                    setRed = false;
+                }
+                break;
+            case Minisuchboot:
                 if ( this.model.setCopy(3)) {
                     for (ShipAddTile tile : this.miniTiles) {
-                        tile.setClicked();
-                        actv = ShipEnum.Minisuchboot;
+                        if ( tile.isSet()) {
+                            tile.setDismissed();
+                            setWhite = true;
+                            actv = ShipEnum.KeinBoot;
+                        }
+                        else {
+                            tile.setClicked();
+                            actv = ShipEnum.Minisuchboot;
+                        }
                     }
+                }
+                else {
+                    setRed = false;
                 }
                 break;
         }
-        this.model.setShipsBorder(true);
+        if ( setRed ) {
+            this.model.setShipsBorder(true);
+        }
+        if ( setWhite ){
+            this.model.setShipsBorder(false);
+        }
+    }
+
+    @Override
+    public void handle(Event event) {
+        int id = Integer.parseInt(((ShipAddTile)event.getSource()).getId());
+
+        ShipEnum actvTemp = actv;
+        if ( actvTemp != ShipEnum.KeinBoot && actvTemp != getEnumToId(id) ) {
+            dismissActive(actvTemp);
+        }
+        actv = getEnumToId(id);
+
+        setActivated();
 
     }
 
-    private void dismissActive() {
-        switch ( actv ) {
+
+
+    private void dismissActive( ShipEnum which ) {
+        switch ( which ) {
             case Schlachtschiff:
                 for (ShipAddTile tile : this.schlachtTiles) {
-                    tile.setDismissed();
+                    if ( !tile.isDeact()) {
+                        tile.setDismissed();
+                    }
                 }
                 break;
             case Kreuzer:
                 for (ShipAddTile tile : this.kreuzTiles) {
-                    tile.setDismissed();
+                    if ( !tile.isDeact()) {
+                        tile.setDismissed();
+                    }
                 }
                 break;
             case Fragette:
                 for (ShipAddTile tile : this.fragTiles) {
-                    tile.setDismissed();
+                    if ( !tile.isDeact()) {
+                        tile.setDismissed();
+                    }
                 }
                 break;
             case Minisuchboot:
                 for (ShipAddTile tile : this.miniTiles) {
-                    tile.setDismissed();
+                    if ( !tile.isDeact()) {
+                        tile.setDismissed();
+                    }
                 }
                 break;
         }

@@ -128,7 +128,7 @@ public class Tile extends StackPane
 
     public void setRedBlock() {
         this.redBlockSet = true;
-        FillTransition ft = new FillTransition(Duration.millis(1500), border, Color.color(0.95,0.95,0.95), Color.color(1, 0,0,0.15));
+        FillTransition ft = new FillTransition(Duration.millis(300), border, Color.color(0.95,0.95,0.95), Color.color(1, 183.0/255,183.0/255));
         ft.setCycleCount(1);
         ft.setAutoReverse(true);
         ft.play();
@@ -136,10 +136,16 @@ public class Tile extends StackPane
 
     public void resetRedBlock() {
         this.redBlockSet = false;
-        FillTransition ft = new FillTransition(Duration.millis(1500), border, Color.color(1, 0,0,0.15),  Color.color(0.95,0.95,0.95));
+        FillTransition ft = new FillTransition(Duration.millis(300), border, Color.color(1, 183.0/255,183.0/255),  Color.color(0.95,0.95,0.95));
         ft.setCycleCount(1);
         ft.setAutoReverse(true);
         ft.play();
+    }
+
+    public void setNormal() {
+        this.redBlockSet = false;
+        border.setStroke(Color.DARKGRAY);
+        border.setFill(Color.color(0.95,0.95,0.95));
     }
 
     public Tile ( int x, int y, boolean hasShip ) {

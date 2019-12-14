@@ -249,28 +249,37 @@ public class ClientModel
         this.setShipsBorder(false);
     }
 
+    public void cleanGridFromRed() {
+        for ( int i = 0; i < 10; i++ ) {
+            for ( int j = 0; j < 10; j++ ) {
+                if ( !this.actualGridEig[i][j].isHasShip() ) {
+                    this.actualGridEig[i][j].setNormal();
+                }
+            }
+        }
+    }
+
     public void setShipsBorder( boolean red ) {
         if ( firstShipAdded) {
             for ( Ship[] shipsArr: this.ships) {
                 for ( Ship ship : shipsArr ) {
+                    int x = ship.getStartX();
+                    int y = ship.getStartY();
+
+                    int endX = ship.getEndX();
+                    int endY = ship.getEndY();
+
+                    int len = ship.getLength();
+
+                    int orientation;
+
+                    if ( x == endX ) {
+                        orientation = VERTICAL;
+                    }
+                    else {
+                        orientation = HORIZONTAL;
+                    }
                     if ( ship.isPlaced() ) {
-                        int x = ship.getStartX();
-                        int y = ship.getStartY();
-
-                        int endX = ship.getEndX();
-                        int endY = ship.getEndY();
-
-                        int len = ship.getLength();
-
-                        int orientation;
-
-                        if ( x == endX ) {
-                            orientation = VERTICAL;
-                        }
-                        else {
-                            orientation = HORIZONTAL;
-                        }
-
                         for ( int i = -1; i <= len; i++ ) {
                             if ( orientation == VERTICAL ) {
                                 if ( i == -1  ) {
@@ -356,33 +365,38 @@ public class ClientModel
                                         }
                                     }
                                 }
-                                if ( y - 2 >= 0 ) {
-                                    if ( red ) {
-                                        System.out.println("Red block set: " + this.actualGridEig[x - 1 + i][y-2].isRedBlockSet());
-                                        if ( !this.actualGridEig[x - 1 + i][y-2].isRedBlockSet()) {
-                                            this.actualGridEig[x - 1 + i][y - 2].setRedBlock();
+                                if ( x-1+i < 10 && x-1+i >= 0){
+                                    if ( y - 2 >= 0 ) {
+                                        if ( red ) {
+                                            System.out.println("Why: " + x + ", " + (x-1+i));
+                                            System.out.println("Red block set: " + this.actualGridEig[x - 1 + i][y-2].isRedBlockSet());
+                                            if ( !this.actualGridEig[x - 1 + i][y-2].isRedBlockSet()) {
+                                                this.actualGridEig[x - 1 + i][y - 2].setRedBlock();
+                                            }
+                                        }
+                                        else {
+                                            if ( this.actualGridEig[x - 1 + i][y-2].isRedBlockSet()) {
+                                                this.actualGridEig[x - 1 + i][y - 2].resetRedBlock();
+                                            }
                                         }
                                     }
-                                    else {
-                                        if ( this.actualGridEig[x - 1 + i][y-2].isRedBlockSet()) {
-                                            this.actualGridEig[x - 1 + i][y - 2].resetRedBlock();
+                                    if ( y < 10 ) {
+                                        if ( red ) {
+                                            if ( !this.actualGridEig[x - 1 + i][y].isRedBlockSet()) {
+                                                this.actualGridEig[x - 1 + i][y].setRedBlock();
+                                            }
                                         }
-                                    }
-                                }
-                                if ( y < 10 ) {
-                                    if ( red ) {
-                                        if ( !this.actualGridEig[x - 1 + i][y].isRedBlockSet()) {
-                                            this.actualGridEig[x - 1 + i][y].setRedBlock();
-                                        }
-                                    }
-                                    else {
-                                        if ( this.actualGridEig[x - 1 + i][y].isRedBlockSet()) {
-                                            this.actualGridEig[x - 1 + i][y].resetRedBlock();
+                                        else {
+                                            if ( this.actualGridEig[x - 1 + i][y].isRedBlockSet()) {
+                                                this.actualGridEig[x - 1 + i][y].resetRedBlock();
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
+                    }
+                    else {
                     }
                 }
             }
