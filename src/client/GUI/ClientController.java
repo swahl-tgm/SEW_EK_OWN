@@ -56,10 +56,14 @@ public class ClientController implements Initializable, EventHandler {
 
     private void ownTileClicked( Tile currentTile, MouseEvent mouseEvent ) {
         if ( actv != ShipEnum.KeinBoot ) {
-            ShipEnum tempEnm = actv;
-            model.addShip(actv, currentTile.getX(), currentTile.getY());
-            dismissActive();
-            resetText(tempEnm, -1);
+            if ( model.addShip(actv, currentTile.getX(), currentTile.getY()) ) {
+                ShipEnum tempEnm = actv;
+                this.model.setShipsBorder(false);
+                // first ship added
+                this.model.setFirstShipAdded(true);
+                dismissActive();
+                resetText(tempEnm, -1);
+            }
         }
         else {
             if ( currentTile.isHasShip() ) {
@@ -291,6 +295,7 @@ public class ClientController implements Initializable, EventHandler {
                 }
                 break;
         }
+        this.model.setShipsBorder(true);
 
     }
 

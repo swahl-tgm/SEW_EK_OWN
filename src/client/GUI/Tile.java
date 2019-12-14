@@ -21,7 +21,7 @@ public class Tile extends StackPane
     private Tile beforeTile;
 
     private boolean alreadyHit;
-
+    private boolean redBlockSet;
 
     private Rectangle border = new Rectangle(20, 20);
     private Text text = new Text();
@@ -118,19 +118,27 @@ public class Tile extends StackPane
         this.callback = callback;
     }
 
+    public boolean isRedBlockSet() {
+        return redBlockSet;
+    }
+
+    public void setRedBlockSet(boolean readBlockSet) {
+        this.redBlockSet = readBlockSet;
+    }
+
     public void setRedBlock() {
-        FillTransition ft = new FillTransition(Duration.millis(3000), border, Color.color(0.95,0.95,0.95), Color.color(1, 0,0,0.15));
+        this.redBlockSet = true;
+        FillTransition ft = new FillTransition(Duration.millis(1500), border, Color.color(0.95,0.95,0.95), Color.color(1, 0,0,0.15));
         ft.setCycleCount(1);
         ft.setAutoReverse(true);
-
         ft.play();
     }
 
     public void resetRedBlock() {
-        FillTransition ft = new FillTransition(Duration.millis(3000), border, Color.color(1, 0,0,0.15),  Color.color(0.95,0.95,0.95));
+        this.redBlockSet = false;
+        FillTransition ft = new FillTransition(Duration.millis(1500), border, Color.color(1, 0,0,0.15),  Color.color(0.95,0.95,0.95));
         ft.setCycleCount(1);
         ft.setAutoReverse(true);
-
         ft.play();
     }
 
