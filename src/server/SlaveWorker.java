@@ -69,9 +69,6 @@ public class SlaveWorker implements Runnable {
         this.out.println(ship);
     }
 
-    private void setShipsSet() {
-        this.out.println(MessageProtocol.SHIPSET);
-    }
 
     @Override
     public void run() {
@@ -99,9 +96,6 @@ public class SlaveWorker implements Runnable {
                             break;
                         case MessageProtocol.SHIP:
                             this.enm.sendShip(msg);
-                            break;
-                        case MessageProtocol.SHIPSET:
-                            this.enm.setShipsSet();
                             break;
                     }
                     System.out.println(msg);

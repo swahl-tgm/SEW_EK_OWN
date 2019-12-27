@@ -81,11 +81,6 @@ public class Client implements Runnable {
                     case MessageProtocol.SHIP:
                         this.c.setEnmShip(msg);
                         break;
-                    case MessageProtocol.ISSHIPSET:
-                        this.c.isShipsSet();
-                    case MessageProtocol.SHIPSET:
-                        this.c.setShipsSet();
-                        break;
                     case MessageProtocol.ENMSET:
                         this.c.foundEnm();
                         break;

@@ -88,9 +88,16 @@ public class ClientController implements Initializable, EventHandler {
 
         this.c.send(MessageProtocol.READY);
 
-        if ( this.startedEnm ) {
-            this.startGameBothReady();
+        try {
+            if ( this.startedEnm ) {
+                this.startGameBothReady();
+            }
         }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        this.readyBut.setDisable(true);
     }
 
     public void setEnmStarted() {
@@ -102,11 +109,31 @@ public class ClientController implements Initializable, EventHandler {
 
     public void startGameBothReady() {
         System.out.println("Game started");
+
+        switchFieldColors();
+
         String[] shipStrings = this.model.getShipsToString();
 
         for (String string: shipStrings) {
             System.out.println(string);
             this.c.send(string);
+        }
+    }
+
+    private void switchFieldColors() {
+        for (Tile[] arr: this.enmClick) {
+            for ( Tile tile: arr) {
+                if (! tile.isHasShip() ) {
+                    tile.setNormal();
+                }
+            }
+        }
+        for (Tile[] arr: this.ownClick) {
+            for ( Tile tile: arr ) {
+                if (! tile.isHasShip() ) {
+                    tile.setDark();
+                }
+            }
         }
     }
 
@@ -149,22 +176,10 @@ public class ClientController implements Initializable, EventHandler {
         resetTile(ShipEnum.Kreuzer);
     }
 
-    public void isShipsSet() {
-        if ( this.shipsSet ) {
-            this.c.send(MessageProtocol.SHIPSET + " true");
-        }
-        else {
-            this.c.send(MessageProtocol.SHIPSET + " false");
-        }
-    }
-
-    public void setShipsSet() {
-        this.shipsSet = true;
-    }
 
     public void setEnmShip( String text) {
         if ( this.model.setEnmShip(text) ) {
-            this.c.send(MessageProtocol.SHIPSET);
+            System.out.println("All Ships shiped");
         }
     }
 
@@ -348,10 +363,15 @@ public class ClientController implements Initializable, EventHandler {
     private void enmTileClicked( Tile currentTile ) {
         if ( started && startedEnm ) {
             // do
-            System.out.println("Lets go!!");
+            System.out.println("x: " + currentTile.getX());
+            System.out.println("y: " + currentTile.getY());
+
+            int x = currentTile.getX();
+            int y = currentTile.getY();
+            this.model.setEnmTileHit(x-1,y-1);
+            this.c.send(MessageProtocol.HIT + " " + x + ", " + y);
         }
-        System.out.println("x: " + currentTile.getX());
-        System.out.println("y: " + currentTile.getY());
+
     }
 
     public void setTileHit( String msg ) {
@@ -359,7 +379,7 @@ public class ClientController implements Initializable, EventHandler {
         int x = Integer.parseInt(msg.substring(msg.indexOf(" ")+1,msg.indexOf(",")));
         int y = Integer.parseInt(msg.substring(msg.indexOf(",")+2));
 
-        this.model.setTileHit(x,y);
+        this.model.setOwnTileHit(x-1,y-1);
     }
 
 

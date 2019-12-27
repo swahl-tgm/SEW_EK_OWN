@@ -111,40 +111,62 @@ public class ClientModel
         return MessageProtocol.SHIP + " " + ship.getClass() + ": " + ship.getStartX() + ", " + ship.getStartY() + "; " + ship.getEndX() + ", " + ship.getEndY();
     }
 
-    public void setTileHit( int x, int y ) {
-        this.actualGridEig[x][y].setHit(checkIfOnField(x,y));
+    public void setOwnTileHit( int x, int y ) {
+        System.out.println(checkIfOnOwnField(x,y));
+        this.actualGridEig[x][y].setHit(checkIfOnOwnField(x,y));
     }
 
-    private boolean checkIfOnField( int x, int y ) {
-        for (Ship[] arr: this.enmShips) {
-            for (Ship ship: arr) {
-                int startX = ship.getStartX();
-                int endX = ship.getEndX();
+    public void setEnmTileHit( int x, int y ) {
+        System.out.println(checkIfOnEnmField(x,y));
+        this.actualGridEnm[x][y].setHit(checkIfOnEnmField(x,y));
+    }
 
-                if ( startX == endX ) {
-                    // vertical
-                    // important: y!
-                    if ( x == startX ) {
-                        for (int i = ship.getStartY(); i < ship.getEndY(); i++ ) {
-                            if ( i == y ) {
-                                // hit
-                                return true;
-                            }
+    private boolean checkIfOnField( int x, int y, Ship[] arr ) {
+        for (Ship ship: arr) {
+            int startX = ship.getStartX();
+            int endX = ship.getEndX();
+
+            if ( startX == endX ) {
+                // vertical
+                // important: y!
+                if ( x == startX ) {
+                    for (int i = ship.getStartY(); i < ship.getEndY(); i++ ) {
+                        if ( i == y ) {
+                            // hit
+                            return true;
                         }
                     }
                 }
-                else {
-                    // horizontal
-                    // important: x!
-                    if ( y ==  ship.getStartY() ) {
-                        for (int i = ship.getStartX(); i < ship.getEndX(); i++ ) {
-                            if ( i == x ) {
-                                // hit
-                                return true;
-                            }
+            }
+            else {
+                // horizontal
+                // important: x!
+                if ( y ==  ship.getStartY() ) {
+                    for (int i = ship.getStartX(); i < ship.getEndX(); i++ ) {
+                        if ( i == x ) {
+                            // hit
+                            return true;
                         }
                     }
                 }
+            }
+        }
+        return false;
+    }
+
+    private boolean checkIfOnEnmField( int x, int y ) {
+        for (Ship[] arr: this.enmShips) {
+            if ( checkIfOnField(x,y, arr) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean checkIfOnOwnField( int x, int y ) {
+        for (Ship[] arr: this.ships) {
+            if ( checkIfOnField(x,y, arr) ) {
+                return true;
             }
         }
         return false;
