@@ -1,17 +1,108 @@
 package client;
 
-public class Client {
+import client.GUI.ClientController;
+import javafx.application.Platform;
+import msg.MessageProtocol;
 
-    String host;
-    int port;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
-    public Client( String host, Integer port) {
-        if ( host == null ) this.host = "localhost";
-        if ( port == null) this.port = 5050;
+public class Client implements Runnable {
+
+    private String host;
+    private int port;
+    private Socket socket;
+    private ClientController c;
+
+    private BufferedReader in;
+    private PrintWriter out;
+
+    private boolean listening;
+
+    public Client( String host, Integer port, ClientController c) throws IOException {
+        this.host = Objects.requireNonNullElse(host, "localhost");
+        this.port = Objects.requireNonNullElse(port, 5050);
+        this.c = c;
+
+        socket = new Socket(this.host, this.port);
+        listening = false;
     }
 
 
-    public static void main( String[] args ) {
-        new Client(null, null);
+    public void shutdown() {
+        if ( listening ) {
+            try {
+                listening = false;
+                out.println(MessageProtocol.EXIT);
+                in.close();
+                out.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void send( String msg) {
+        this.out.println(msg);
+    }
+
+
+    @Override
+    public void run() {
+        listening = true;
+        try {
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+            out = new PrintWriter(socket.getOutputStream(), true);
+
+            String msg;
+            while ( (msg = in.readLine()) != null )  {
+                int ind = msg.indexOf(" ");
+                if ( ind == -1 ) {
+                    ind = msg.length();
+                }
+                String command = msg.substring(0, ind);
+                System.out.println("Command: " + command);
+                switch (command) {
+                    case MessageProtocol.READY:
+                        this.c.setEnmStarted();
+                        break;
+                    case MessageProtocol.EXIT:
+                        this.shutdown();
+                        break;
+                    case MessageProtocol.HIT:
+                        this.c.setTileHit(msg);
+                        break;
+                    case MessageProtocol.SHIP:
+                        this.c.setEnmShip(msg);
+                        break;
+                    case MessageProtocol.ISSHIPSET:
+                        this.c.isShipsSet();
+                    case MessageProtocol.SHIPSET:
+                        this.c.setShipsSet();
+                        break;
+                    case MessageProtocol.ENMSET:
+                        this.c.foundEnm();
+                        break;
+                    case MessageProtocol.ENMUNSET:
+                        this.c.enmDisconnected();
+                        break;
+                }
+            }
+        } catch (IOException e) {
+            // Server disconnected
+            System.out.println("Server disconnected");
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    c.srvDisconnected();
+                }
+            });
+        }
     }
 }

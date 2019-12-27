@@ -148,7 +148,7 @@ public class Tile extends StackPane
         border.setFill(Color.color(0.95,0.95,0.95));
     }
 
-    public Tile ( int x, int y, boolean hasShip ) {
+    public Tile ( int x, int y, boolean hasShip, boolean isEnm ) {
         this.x = x;
         this.y = y;
         this.hasShip = hasShip;
@@ -156,13 +156,32 @@ public class Tile extends StackPane
         this.beforeTile = null;
         this.shipArrayIndex = -1;
         border.setStroke(Color.DARKGRAY);
-        border.setFill(Color.color(0.95,0.95,0.95));
+        if ( isEnm ) {
+            border.setFill(Color.color(0.85,0.85,0.85));
+        }
+        else {
+            border.setFill(Color.color(0.95,0.95,0.95));
+        }
 
         getChildren().addAll(border, text);
     }
 
+    public void setDark() {
+        border.setFill(Color.color(0.85,0.85,0.85));
+    }
+    public void setLight() {
+        border.setFill(Color.color(0.95,0.95,0.95));
+    }
 
-    public void hitTile() {
 
+    public void setHit( boolean realHit ) {
+        this.setDark();
+        this.text.setText("X");
+        if ( realHit ) {
+            this.text.setFill(Color.color(1,0,0));
+        }
+        else {
+            this.text.setFill(Color.color(0,0,0));
+        }
     }
 }

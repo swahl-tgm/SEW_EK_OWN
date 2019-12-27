@@ -1,19 +1,36 @@
 package client.GUI;
 
+import client.Client;
 import client.GUI.Ships.*;
+import client.GUI.Start.ClientConnect;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.Stage;
+import msg.MessageProtocol;
+
+import javax.swing.*;
+import java.io.IOException;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ClientController implements Initializable, EventHandler {
 
@@ -53,44 +70,162 @@ public class ClientController implements Initializable, EventHandler {
     private StackPane enmTextBase;
     private Text enmText;
 
+    @FXML
+    private Label commandLine;
+    private CommandCounter counter;
+    private Thread counterThread;
+    private Button readyBut;
+    private boolean enmFound;
+    private boolean started;
+    private boolean startedEnm;
+    private boolean shipsSet;
 
-    private void ownTileClicked( Tile currentTile, MouseEvent mouseEvent ) {
-        System.out.println("Selected: " +actv);
-        if ( actv != ShipEnum.KeinBoot ) {
-            if ( currentTile.isHasShip() ) {
-                ShipEnum shipEnum = actv;
-                actv = ShipEnum.KeinBoot;
-                ownTileClicked(currentTile, mouseEvent);
-            }
-            else {
-                if ( model.addShip(actv, currentTile.getX(), currentTile.getY()) ) {
-                    ShipEnum tempEnm = actv;
-                    this.model.setShipsBorder(true);
-                    // first ship added
-                    this.model.setFirstShipAdded(true);
-                    resetText(tempEnm, -1);
-                }
-            }
+    // Callback
+    private Client c;
+
+    private void startGame() {
+        this.started = true;
+
+        this.c.send(MessageProtocol.READY);
+
+        if ( this.startedEnm ) {
+            this.startGameBothReady();
+        }
+    }
+
+    public void setEnmStarted() {
+        this.startedEnm = true;
+        if ( this.started ) {
+            this.startGameBothReady();
+        }
+    }
+
+    public void startGameBothReady() {
+        System.out.println("Game started");
+        String[] shipStrings = this.model.getShipsToString();
+
+        for (String string: shipStrings) {
+            System.out.println(string);
+            this.c.send(string);
+        }
+    }
+
+    public void srvDisconnected() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("Start/start.fxml"));
+            Parent root = null;
+            root = loader.load();
+            Scene scene = new Scene(root);
+
+            ClientConnect controller = loader.getController();
+            controller.initCommandLine("Verbindung zum Server unterbrochen!");
+            Stage stage = (Stage) fieldEig.getScene().getWindow();
+            // Swap screen
+            stage.setScene(scene);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void enmDisconnected() {
+        this.resetModel();
+        this.enmFound = false;
+        this.shipsSet = true;
+        // start counter
+        this.startCommandCounterAgain();
+        deactivateAddShipField(ShipEnum.Minisuchboot);
+        deactivateAddShipField(ShipEnum.Schlachtschiff);
+        deactivateAddShipField(ShipEnum.Fragette);
+        deactivateAddShipField(ShipEnum.Kreuzer);
+    }
+
+    public void foundEnm() {
+        this.enmFound = true;
+        this.closeCommandCounter();
+        resetTile(ShipEnum.Minisuchboot);
+        resetTile(ShipEnum.Schlachtschiff);
+        resetTile(ShipEnum.Fragette);
+        resetTile(ShipEnum.Kreuzer);
+    }
+
+    public void isShipsSet() {
+        if ( this.shipsSet ) {
+            this.c.send(MessageProtocol.SHIPSET + " true");
         }
         else {
-            if ( currentTile.isHasShip() ) {
-                if (mouseEvent.getButton() == MouseButton.PRIMARY)
-                {
-                    ShipEnum currentDeleted = model.removeShip(currentTile);
-                    resetText(currentDeleted, 1);
-                    this.model.cleanGridFromRed();
-                    // Only temp, will bi changed in dismissActive
-                    actv = currentDeleted;
+            this.c.send(MessageProtocol.SHIPSET + " false");
+        }
+    }
+
+    public void setShipsSet() {
+        this.shipsSet = true;
+    }
+
+    public void setEnmShip( String text) {
+        if ( this.model.setEnmShip(text) ) {
+            this.c.send(MessageProtocol.SHIPSET);
+        }
+    }
+
+
+    private void ownTileClicked( Tile currentTile, MouseEvent mouseEvent ) {
+        if ( !started ) {
+            System.out.println("Selected: " +actv);
+            if ( actv != ShipEnum.KeinBoot ) {
+                if ( currentTile.isHasShip() ) {
+                    ShipEnum shipEnum = actv;
                     dismissActive(actv);
-                    actv = currentDeleted;
-                    setActivated();
-                    model.setShipsBorder(true);
-                } else if (mouseEvent.getButton() == MouseButton.SECONDARY)
-                {
-                    this.model.cleanGridFromRed();
-                    model.turnShip(currentTile);
+                    ownTileClicked(currentTile, mouseEvent);
+                    System.out.println("Selected end: " +actv);
+                }
+                else {
+                    if ( model.addShip(actv, currentTile.getX(), currentTile.getY()) ) {
+                        ShipEnum tempEnm = actv;
+                        this.model.setShipsBorder(true);
+                        // first ship added
+                        this.model.setFirstShipAdded(true);
+                        resetText(tempEnm, -1);
+                    }
+                    if ( model.allShipsPlaced() ) {
+                        readyBut = new Button("Ready?");
+                        readyBut.setOnAction(new EventHandler<ActionEvent>() {
+                            @Override
+                            public void handle(ActionEvent actionEvent) {
+                                // komm nocht
+                                startGame();
+                            }
+                        });
+                        toPlace.add(readyBut, 4,0, 2,2);
+                    }
                 }
             }
+            else {
+                if ( currentTile.isHasShip() ) {
+                    if (mouseEvent.getButton() == MouseButton.PRIMARY)
+                    {
+                        // Remove ship
+                        ShipEnum currentDeleted = model.removeShip(currentTile);
+                        resetText(currentDeleted, 1);
+                        this.model.cleanGridFromRed();
+                        // Only temp, will bi changed in dismissActive
+                        actv = currentDeleted;
+                        dismissActive(actv);
+                        actv = currentDeleted;
+                        setActivated();
+                        model.setShipsBorder(true);
+
+                        if (toPlace.getChildren().indexOf(readyBut) != -1 ) {
+                            toPlace.getChildren().remove(readyBut);
+                        }
+                    } else if (mouseEvent.getButton() == MouseButton.SECONDARY)
+                    {
+                        this.model.cleanGridFromRed();
+                        model.turnShip(currentTile);
+                    }
+                }
+            }
+
         }
 
     }
@@ -211,8 +346,20 @@ public class ClientController implements Initializable, EventHandler {
     }
 
     private void enmTileClicked( Tile currentTile ) {
+        if ( started && startedEnm ) {
+            // do
+            System.out.println("Lets go!!");
+        }
         System.out.println("x: " + currentTile.getX());
         System.out.println("y: " + currentTile.getY());
+    }
+
+    public void setTileHit( String msg ) {
+        // !HIT 0, 2
+        int x = Integer.parseInt(msg.substring(msg.indexOf(" ")+1,msg.indexOf(",")));
+        int y = Integer.parseInt(msg.substring(msg.indexOf(",")+2));
+
+        this.model.setTileHit(x,y);
     }
 
 
@@ -244,12 +391,25 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
+
+
+    public void init(Client c){
+        this.c = c;
+    }
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         model = new ClientModel();
 
 
-        //eigText.setContentDisplay(ContentDisplay.TOP);
+        started = false;
+        startedEnm = false;
+        enmFound = false;
+
+        counter = new CommandCounter(this.commandLine);
+        counterThread = new Thread(counter);
+        counterThread.setDaemon(true);
+        counterThread.start();
 
         this.enmText = new Text("Gegner Spielfeld");
         enmTextBase = new StackPane();
@@ -302,6 +462,7 @@ public class ClientController implements Initializable, EventHandler {
     private void createTiles(GridPane toAddGrid, ShipAddTile[] toAdd ) {
         for ( int i = 0; i < toAdd.length; i++ ) {
             ShipAddTile newTile = new ShipAddTile();
+            newTile.setDeactivated();
             newTile.setId(""+toAdd.length);
             newTile.setOnMouseClicked(this);
             toAdd[i] = newTile;
@@ -418,16 +579,17 @@ public class ClientController implements Initializable, EventHandler {
 
     @Override
     public void handle(Event event) {
-        int id = Integer.parseInt(((ShipAddTile)event.getSource()).getId());
+        if ( !started && enmFound ) {
+            int id = Integer.parseInt(((ShipAddTile)event.getSource()).getId());
 
-        ShipEnum actvTemp = actv;
-        if ( actvTemp != ShipEnum.KeinBoot && actvTemp != getEnumToId(id) ) {
-            dismissActive(actvTemp);
+            ShipEnum actvTemp = actv;
+            if ( actvTemp != ShipEnum.KeinBoot && actvTemp != getEnumToId(id) ) {
+                dismissActive(actvTemp);
+            }
+            actv = getEnumToId(id);
+
+            setActivated();
         }
-        actv = getEnumToId(id);
-
-        setActivated();
-
     }
 
 
@@ -465,5 +627,121 @@ public class ClientController implements Initializable, EventHandler {
         }
         actv = ShipEnum.KeinBoot;
 
+    }
+
+    private void resetModel() {
+        this.started = false;
+        this.enmFound = false;
+        this.model.resetValues();
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                if (toPlace.getChildren().indexOf(readyBut) != -1 ) {
+                    toPlace.getChildren().remove(readyBut);
+                }
+                schlachtText.setText("1x Schlachtschiff");
+                kreuzerText.setText("2x Kreuzer");
+                fragText.setText("3x Fragetten");
+                miniText.setText("4x Minisuchboote");
+                fieldEig.getChildren().clear();
+                fieldEnm.getChildren().clear();
+                System.out.println("Removed");
+                createView();
+                System.out.println("View created");
+            }
+        });
+    }
+
+    public void closeCommandCounter() {
+        this.counter.stop();
+    }
+
+    public void startCommandCounterAgain() {
+        this.counter.startAgain();
+        this.counter = new CommandCounter(this.commandLine);
+        counterThread = new Thread(counter);
+        counterThread.setDaemon(true);
+        counterThread.start();
+    }
+
+
+    class CommandCounter implements Runnable {
+
+        private Label line;
+        private int min;
+        private int sec;
+
+        private boolean running;
+
+        public CommandCounter( Label line) {
+            this.line = line;
+            min = 0;
+            sec = 0;
+        }
+
+        public void startAgain() {
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    line.setText("Enemy Player disconnected");
+                }
+            });
+            try {
+                Thread.sleep(1000);
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        line.setText("Try to lookout for new Players");
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void stop() {
+            this.running = false;
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    line.setText("Player found!");
+                }
+            });
+            try {
+                Thread.sleep(1000);
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        line.setText("");
+                    }
+                });
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void run() {
+            this.running = true;
+            while ( running ) {
+                try {
+                    Thread.sleep(1000);
+                    sec++;
+                    if ( sec == 60 ) {
+                        min++;
+                        sec = 0;
+                    }
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            line.setText("Searching for Players: " + String.format("%02d", min) + ":"+String.format("%02d", sec));
+                        }
+                    });
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
     }
 }

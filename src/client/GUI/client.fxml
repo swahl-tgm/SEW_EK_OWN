@@ -29,4 +29,7 @@
               fx:id="toPlace"
               alignment="CENTER" hgap="20" vgap="20" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2" GridPane.rowSpan="1">
     </GridPane>
+    <StackPane GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="2" GridPane.rowSpan="1">
+        <Label fx:id="commandLine" text="Searching for Players: 0:00"/>
+    </StackPane>
 </GridPane>

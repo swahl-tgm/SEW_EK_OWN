@@ -2,9 +2,13 @@ package client.GUI;
 
 import javafx.scene.layout.GridPane;
 import client.GUI.Ships.*;
+import msg.MessageProtocol;
 
 import javax.imageio.plugins.tiff.TIFFDirectory;
 import javax.net.ssl.HostnameVerifier;
+import java.awt.*;
+import java.security.KeyRep;
+import java.security.spec.ECField;
 import java.util.LinkedList;
 import java.util.concurrent.CompletableFuture;
 
@@ -17,9 +21,9 @@ public class ClientModel
     private static final int LEFT = 0;
     private static final int RIGHT = 1;
 
-
-
     private Ship[][] ships; // [0]: Schlachtschiff, [1]: Kreuzer, [2]: Fregatten, [3]: Minisuchboot
+    private Ship[][] enmShips; // [0]: Schlachtschiff, [1]: Kreuzer, [2]: Fregatten, [3]: Minisuchboot
+    private int enmShipsAdded;
     private int copy;
     private boolean firstShipAdded;
     private boolean turning;
@@ -89,9 +93,151 @@ public class ClientModel
         return out;
     }
 
+    public String[] getShipsToString() {
+        String[] out = new String[10];
+
+        int i = 0;
+        for (Ship[] shipArr : this.ships) {
+            for (Ship ship : shipArr) {
+                out[i] = this.getShipsToStringSing(ship);
+                i++;
+            }
+        }
+
+        return out;
+    }
+
+    private String getShipsToStringSing(Ship ship) {
+        return MessageProtocol.SHIP + " " + ship.getClass() + ": " + ship.getStartX() + ", " + ship.getStartY() + "; " + ship.getEndX() + ", " + ship.getEndY();
+    }
+
+    public void setTileHit( int x, int y ) {
+        this.actualGridEig[x][y].setHit(checkIfOnField(x,y));
+    }
+
+    private boolean checkIfOnField( int x, int y ) {
+        for (Ship[] arr: this.enmShips) {
+            for (Ship ship: arr) {
+                int startX = ship.getStartX();
+                int endX = ship.getEndX();
+
+                if ( startX == endX ) {
+                    // vertical
+                    // important: y!
+                    if ( x == startX ) {
+                        for (int i = ship.getStartY(); i < ship.getEndY(); i++ ) {
+                            if ( i == y ) {
+                                // hit
+                                return true;
+                            }
+                        }
+                    }
+                }
+                else {
+                    // horizontal
+                    // important: x!
+                    if ( y ==  ship.getStartY() ) {
+                        for (int i = ship.getStartX(); i < ship.getEndX(); i++ ) {
+                            if ( i == x ) {
+                                // hit
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean setEnmShip( String text) {
+        // Aufgebaut nach: "!SHIP Klasse: " + ship.getStartX() + ", " + ship.getStartY() + "; " + ship.getEndX() + ", " + ship.getEndY();
+        System.out.println("Text: " +text);
+        text = text.substring(text.indexOf(".")+1);
+        text = text.substring(text.indexOf(".")+1);
+        String type = text.substring(text.indexOf(".")+1,text.indexOf(":"));
+        text = text.substring(text.indexOf(":")+1);
+        int starX = Integer.parseInt(text.substring(1,text.indexOf(",")));
+        text = text.substring(text.indexOf(",")+1);
+        int startY = Integer.parseInt(text.substring(1, text.indexOf(";")));
+        text = text.substring(text.indexOf(";")+1);
+        int endX = Integer.parseInt(text.substring(1, text.indexOf(",")));
+        text = text.substring(text.indexOf(",")+1);
+        int endY = Integer.parseInt(text.substring(1));
+
+        int inArr = 0;
+        switch (type) {
+            case "Schlachtschiff":
+                inArr = 0;
+                break;
+            case "Kreuzer":
+                inArr = 1;
+                break;
+            case "Fregatte":
+                inArr = 2;
+                break;
+            case "Minisuchboot":
+                inArr = 3;
+                break;
+        }
+        for (Ship ship: this.enmShips[inArr]) {
+            if ( !ship.isPlaced() ) {
+                ship.setEndY(endY);
+                ship.setEndX(endX);
+                ship.setStartY(startY);
+                ship.setStartX(starX);
+                ship.setPlaced(true);
+
+                break;
+            }
+        }
+        enmShipsAdded++;
+
+        if ( enmShipsAdded == 10 && this.checkEnmShipAll() ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean checkEnmShipAll()  {
+        for (Ship[] shipArr: this.enmShips) {
+            for (Ship ship: shipArr) {
+                if ( !ship.isPlaced() ) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
 
 
     public ClientModel() {
+        this.copy = -1;
+        ships = new Ship[4][];
+        ships[0] = new Schlachtschiff[1];
+        ships[1] = new Kreuzer[2];
+        ships[2] = new Fregatte[3];
+        ships[3] = new Minisuchboot[4];
+
+        enmShipsAdded = 0;
+        enmShips = new Ship[4][];
+        enmShips[0] = new Schlachtschiff[1];
+        enmShips[1] = new Kreuzer[2];
+        enmShips[2] = new Fregatte[3];
+        enmShips[3] = new Minisuchboot[4];
+
+
+        createShips();
+        actualGridEig = new Tile[10][10];
+        actualGridEnm = new Tile[10][10];
+        firstShipAdded = false;
+        turning = false;
+    }
+
+
+    public void resetValues() {
         this.copy = -1;
         ships = new Ship[4][];
         ships[0] = new Schlachtschiff[1];
@@ -259,6 +405,17 @@ public class ClientModel
         }
     }
 
+    public boolean allShipsPlaced() {
+        for (Ship[] ship : this.ships) {
+            for (Ship shipSing : ship) {
+                if (!shipSing.isPlaced()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     public void setShipsBorder( boolean red ) {
         if ( firstShipAdded) {
             for ( Ship[] shipsArr: this.ships) {
@@ -297,7 +454,7 @@ public class ClientModel
                                     }
 
                                 }
-                                else if ( i == len && y-1+i < 10 ) {
+                                else if ( i == len && y-1+i < 10 && y-1+i >= 0 ) {
                                     if ( red ) {
                                         if ( !this.actualGridEig[x-1][y-1+i].isRedBlockSet()) {
                                             this.actualGridEig[x-1][y - 1+i].setRedBlock();
@@ -309,7 +466,7 @@ public class ClientModel
                                         }
                                     }
                                 }
-                                if ( x - 2 >= 0 ) {
+                                if ( x - 2 >= 0 && y-1+i < 10 && y-1+i >= 0) {
                                     if ( red ) {
                                         System.out.println("Red block set: " + this.actualGridEig[x - 2][y-1+ i].isRedBlockSet());
                                         if ( !this.actualGridEig[x - 2][y-1+ i].isRedBlockSet()) {
@@ -322,7 +479,7 @@ public class ClientModel
                                         }
                                     }
                                 }
-                                if ( x < 10 ) {
+                                if ( x < 10 && y-1+i < 10 && y-1+i >= 0 ) {
                                     if ( red ) {
                                         if ( !this.actualGridEig[x][y-1+ i].isRedBlockSet()) {
                                             this.actualGridEig[x][y-1+ i].setRedBlock();
@@ -353,7 +510,7 @@ public class ClientModel
                                     }
 
                                 }
-                                else if ( i == len && x-1+i < 10 ) {
+                                else if ( i == len && x-1+i < 10 && x-1+i >= 0) {
                                     if ( red ) {
                                         if ( !this.actualGridEig[x-1+i][y-1].isRedBlockSet()) {
                                             this.actualGridEig[x-1+i][y - 1].setRedBlock();
@@ -605,14 +762,18 @@ public class ClientModel
 
     private void createShips() {
         this.ships[0][0] = new Schlachtschiff(0,0,0,0);
+        this.enmShips[0][0] = new Schlachtschiff(0,0,0,0);
         for ( int i = 0; i < 2; i++ ) {
             this.ships[1][i] = new Kreuzer(0,0,0,0);
+            this.enmShips[1][i] = new Kreuzer(0,0,0,0);
         }
         for ( int i = 0; i < 3; i++ ) {
             this.ships[2][i] = new Fregatte(0,0,0,0);
+            this.enmShips[2][i] = new Fregatte(0,0,0,0);
         }
         for ( int i = 0; i < 4; i++ ) {
             this.ships[3][i] = new Minisuchboot(0,0,0,0);
+            this.enmShips[3][i] = new Minisuchboot(0,0,0,0);
         }
     }
 
@@ -649,12 +810,12 @@ public class ClientModel
                     start++;
                 }
                 else {
-                    Tile tile = new Tile(j, i, false);
+                    Tile tile = new Tile(j, i, false, false);
                     outOwn[j-1][i-1] = tile;
                     actualGridEig[j-1][i-1] = tile;
                     fieldEig.add(tile, j,i);
 
-                    Tile tile2 = new Tile(j, i, false);
+                    Tile tile2 = new Tile(j, i, false, true);
                     actualGridEnm[j-1][i-1] = tile2;
                     outEnm[j-1][i-1] = tile2;
                     fieldEnm.add(tile2, j,i);
