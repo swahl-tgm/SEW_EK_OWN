@@ -14,6 +14,7 @@ import java.util.Objects;
 
 public class Client implements Runnable {
 
+    private String name;
     private String host;
     private int port;
     private Socket socket;
@@ -31,6 +32,10 @@ public class Client implements Runnable {
 
         socket = new Socket(this.host, this.port);
         listening = false;
+    }
+
+    public void setName(String name ) {
+        this.name = name;
     }
 
 
@@ -67,7 +72,7 @@ public class Client implements Runnable {
                     ind = msg.length();
                 }
                 String command = msg.substring(0, ind);
-                System.out.println("Command: " + command);
+                System.out.println("Command client: " + command);
                 switch (command) {
                     case MessageProtocol.READY:
                         this.c.setEnmStarted();
@@ -86,6 +91,9 @@ public class Client implements Runnable {
                         break;
                     case MessageProtocol.ENMUNSET:
                         this.c.enmDisconnected();
+                        break;
+                    case MessageProtocol.FIRST:
+                        this.c.setAlreadyHit(true);
                         break;
                 }
             }

@@ -65,10 +65,13 @@ public class SlaveWorker implements Runnable {
         this.out.println(MessageProtocol.READY);
     }
 
+    private void send( String msg) {
+        this.out.println(msg);
+    }
+
     private void sendShip(String ship ) {
         this.out.println(ship);
     }
-
 
     @Override
     public void run() {
@@ -88,6 +91,11 @@ public class SlaveWorker implements Runnable {
                     String command = msg.substring(0, ind);
                     System.out.println("Command: " + command);
                     switch (command) {
+                        case MessageProtocol.FIRST:
+                            this.enm.send(msg);
+                            break;
+                        case MessageProtocol.HIT:
+                            this.enm.send(msg);
                         case MessageProtocol.READY:
                             this.enm.sendReady();
                             break;

@@ -34,12 +34,10 @@ public class ShipAddTile extends StackPane {
     public void setDismissed() {
         this.isSet = false;
         this.isDeact = false;
-        System.out.println("Set to false");
         border.setFill(Color.color(130.0/255,130.0/255,130.0/255,1));
     }
 
     public void setDeactivated() {
-        System.out.println("Set to false");
         this.isSet = false;
         this.isDeact = true;
         border.setFill(Color.color(220.0/255,220.0/255,220.0/255,1));

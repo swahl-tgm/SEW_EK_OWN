@@ -13,6 +13,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.converter.IntegerStringConverter;
 import jdk.jfr.BooleanFlag;
@@ -40,6 +41,8 @@ public class ClientConnect implements Initializable {
     private TextField port;
     @FXML
     private Button createGame;
+    @FXML
+    private TextField name;
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -64,7 +67,7 @@ public class ClientConnect implements Initializable {
                 }
                 System.out.println(port + ", "+ host);
                 Client c = new Client(host, Integer.parseInt(port), controller);
-
+                c.setName(name.getText());
                 // run client
                 executorService.submit(c);
 

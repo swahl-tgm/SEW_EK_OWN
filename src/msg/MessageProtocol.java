@@ -1,6 +1,7 @@
 package msg;
 
 public class MessageProtocol {
+    public static final String FIRST = "!FIRST";
     public static final String READY = "!READY";
     public static final String EXIT = "!EXIT";
     public static final String SHIP = "!SHIP";

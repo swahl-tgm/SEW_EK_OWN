@@ -28,6 +28,8 @@ public class ClientModel
     private boolean firstShipAdded;
     private boolean turning;
 
+    private boolean alreadyHit;
+
     private Tile[][] actualGridEig;
     private Tile[][] actualGridEnm;
 
@@ -111,14 +113,27 @@ public class ClientModel
         return MessageProtocol.SHIP + " " + ship.getClass() + ": " + ship.getStartX() + ", " + ship.getStartY() + "; " + ship.getEndX() + ", " + ship.getEndY();
     }
 
-    public void setOwnTileHit( int x, int y ) {
-        System.out.println(checkIfOnOwnField(x,y));
-        this.actualGridEig[x][y].setHit(checkIfOnOwnField(x,y));
+    public void setOwnTileHit( int x, int y, boolean trueHit ) {
+        this.alreadyHit = false;
+        this.actualGridEig[x-1][y-1].setHit(trueHit);
+        System.out.println("Hit from enm, set already hit to false");
     }
 
-    public void setEnmTileHit( int x, int y ) {
-        System.out.println(checkIfOnEnmField(x,y));
-        this.actualGridEnm[x][y].setHit(checkIfOnEnmField(x,y));
+    public boolean getAlreadyHit() {
+        return this.alreadyHit;
+    }
+    public void setAlreadyHit( boolean to ) {
+        System.out.println("Set already hit to " + to);
+        this.alreadyHit = to;
+    }
+
+    public boolean setEnmTileHit( int x, int y ) {
+        this.alreadyHit = true;
+        System.out.println("Hit from enm, set already hit to false");
+        boolean trueHit = checkIfOnEnmField(x,y);
+        System.out.println(trueHit);
+        this.actualGridEnm[x-1][y-1].setHit(trueHit);
+        return trueHit;
     }
 
     private boolean checkIfOnField( int x, int y, Ship[] arr ) {
@@ -130,7 +145,7 @@ public class ClientModel
                 // vertical
                 // important: y!
                 if ( x == startX ) {
-                    for (int i = ship.getStartY(); i < ship.getEndY(); i++ ) {
+                    for (int i = ship.getStartY(); i <= ship.getEndY(); i++ ) {
                         if ( i == y ) {
                             // hit
                             return true;
@@ -156,15 +171,6 @@ public class ClientModel
 
     private boolean checkIfOnEnmField( int x, int y ) {
         for (Ship[] arr: this.enmShips) {
-            if ( checkIfOnField(x,y, arr) ) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean checkIfOnOwnField( int x, int y ) {
-        for (Ship[] arr: this.ships) {
             if ( checkIfOnField(x,y, arr) ) {
                 return true;
             }

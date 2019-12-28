@@ -22,6 +22,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+import jdk.jfr.BooleanFlag;
 import msg.MessageProtocol;
 
 import javax.swing.*;
@@ -70,6 +71,8 @@ public class ClientController implements Initializable, EventHandler {
     private StackPane enmTextBase;
     private Text enmText;
 
+
+    private CommandLineCapsule commandLineCapsule;
     @FXML
     private Label commandLine;
     private CommandCounter counter;
@@ -78,26 +81,35 @@ public class ClientController implements Initializable, EventHandler {
     private boolean enmFound;
     private boolean started;
     private boolean startedEnm;
-    private boolean shipsSet;
 
     // Callback
     private Client c;
+
+
+    public void setCommandLineText( String msg ) {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                commandLine.setText(msg);
+            }
+        });
+    }
 
     private void startGame() {
         this.started = true;
 
         this.c.send(MessageProtocol.READY);
 
-        try {
-            if ( this.startedEnm ) {
-                this.startGameBothReady();
-            }
+        if ( this.startedEnm ) {
+            this.startGameBothReady();
         }
-        catch (Exception ex) {
-            ex.printStackTrace();
+        else {
+            this.c.send(MessageProtocol.FIRST);
+
         }
 
         this.readyBut.setDisable(true);
+        this.setOwnFieldColorDark();
     }
 
     public void setEnmStarted() {
@@ -112,11 +124,31 @@ public class ClientController implements Initializable, EventHandler {
 
         switchFieldColors();
 
+        System.out.println("Already hit in start: " + this.model.getAlreadyHit());
+        if ( this.model.getAlreadyHit() ) {
+            System.out.println("Already hit: turn");
+            this.setCommandLineText("Your enemies turn");
+        }
+        else {
+            System.out.println("Already hit: your turn");
+            this.setCommandLineText("Your turn");
+        }
+
         String[] shipStrings = this.model.getShipsToString();
 
         for (String string: shipStrings) {
             System.out.println(string);
             this.c.send(string);
+        }
+    }
+
+    private void setOwnFieldColorDark() {
+        for (Tile[] arr: this.ownClick) {
+            for ( Tile tile: arr ) {
+                if (! tile.isHasShip() ) {
+                    tile.setDark();
+                }
+            }
         }
     }
 
@@ -128,13 +160,18 @@ public class ClientController implements Initializable, EventHandler {
                 }
             }
         }
-        for (Tile[] arr: this.ownClick) {
-            for ( Tile tile: arr ) {
-                if (! tile.isHasShip() ) {
-                    tile.setDark();
-                }
+        this.setOwnFieldColorDark();
+    }
+
+    public void setAlreadyHit( boolean to ) {
+        if ( startedEnm && started ) {
+            if (to) {
+                this.setCommandLineText("Your enemies turn");
+            } else {
+                this.setCommandLineText("Your turn");
             }
         }
+        this.model.setAlreadyHit(to);
     }
 
     public void srvDisconnected() {
@@ -158,7 +195,6 @@ public class ClientController implements Initializable, EventHandler {
     public void enmDisconnected() {
         this.resetModel();
         this.enmFound = false;
-        this.shipsSet = true;
         // start counter
         this.startCommandCounterAgain();
         deactivateAddShipField(ShipEnum.Minisuchboot);
@@ -362,24 +398,43 @@ public class ClientController implements Initializable, EventHandler {
 
     private void enmTileClicked( Tile currentTile ) {
         if ( started && startedEnm ) {
-            // do
-            System.out.println("x: " + currentTile.getX());
-            System.out.println("y: " + currentTile.getY());
+            System.out.println("Already Hit: " + !this.model.getAlreadyHit());
+            if ( !this.model.getAlreadyHit() ) {
+                // do
+                System.out.println("x: " + currentTile.getX());
+                System.out.println("y: " + currentTile.getY());
 
-            int x = currentTile.getX();
-            int y = currentTile.getY();
-            this.model.setEnmTileHit(x-1,y-1);
-            this.c.send(MessageProtocol.HIT + " " + x + ", " + y);
+                int x = currentTile.getX();
+                int y = currentTile.getY();
+                boolean trueHit = this.model.setEnmTileHit(x,y);
+                this.c.send(MessageProtocol.HIT + " " + trueHit + ": " + x + ", " + y);
+                this.setCommandLineText("Your enemies turn");
+            }
+        }
+        else {
+            System.out.println("Not your turn!");
         }
 
     }
 
     public void setTileHit( String msg ) {
-        // !HIT 0, 2
-        int x = Integer.parseInt(msg.substring(msg.indexOf(" ")+1,msg.indexOf(",")));
-        int y = Integer.parseInt(msg.substring(msg.indexOf(",")+2));
-
-        this.model.setOwnTileHit(x-1,y-1);
+        // !HIT true: 0, 2
+        try {
+            int x = Integer.parseInt(msg.substring(msg.indexOf(":")+2,msg.indexOf(",")));
+            int y = Integer.parseInt(msg.substring(msg.indexOf(",")+2));
+            String trueHitString = msg.substring(msg.indexOf(" ")+1, msg.indexOf(":")-1);
+            boolean trueHit = false;
+            if ( trueHitString.equals("true") ) {
+                trueHit = true;
+            }
+            System.out.println("TrueHit: " + trueHit);
+            this.model.setOwnTileHit(x, y, trueHit);
+            this.setCommandLineText("Your turn!");
+            System.out.println("Alread Your turn");
+        }
+        catch (Exception ex ) {
+            ex.printStackTrace();
+        }
     }
 
 
@@ -426,7 +481,8 @@ public class ClientController implements Initializable, EventHandler {
         startedEnm = false;
         enmFound = false;
 
-        counter = new CommandCounter(this.commandLine);
+        commandLineCapsule = new CommandLineCapsule(this.commandLine);
+        counter = new CommandCounter(commandLineCapsule);
         counterThread = new Thread(counter);
         counterThread.setDaemon(true);
         counterThread.start();
@@ -673,12 +729,28 @@ public class ClientController implements Initializable, EventHandler {
     }
 
     public void closeCommandCounter() {
+        this.commandLineCapsule.stop();
         this.counter.stop();
+        try {
+            this.counterThread.join();
+            System.out.println("Closing Thread");
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    commandLine.setText("");
+                }
+            });
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void startCommandCounterAgain() {
+        System.out.println("Starting again");
         this.counter.startAgain();
-        this.counter = new CommandCounter(this.commandLine);
+
+        this.commandLineCapsule.start();
+        this.counter = new CommandCounter(commandLineCapsule);
         counterThread = new Thread(counter);
         counterThread.setDaemon(true);
         counterThread.start();
@@ -687,14 +759,15 @@ public class ClientController implements Initializable, EventHandler {
 
     class CommandCounter implements Runnable {
 
-        private Label line;
+        private CommandLineCapsule line;
         private int min;
         private int sec;
 
         private boolean running;
 
-        public CommandCounter( Label line) {
+        public CommandCounter( CommandLineCapsule line) {
             this.line = line;
+            this.running = true;
             min = 0;
             sec = 0;
         }
@@ -703,46 +776,25 @@ public class ClientController implements Initializable, EventHandler {
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
-                    line.setText("Enemy Player disconnected");
+                    line.setText("Enemy Player disconnected! Trying to lookout for new Players", true);
                 }
             });
-            try {
-                Thread.sleep(1000);
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        line.setText("Try to lookout for new Players");
-                    }
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
 
         public void stop() {
             this.running = false;
+            this.line.stop();
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
-                    line.setText("Player found!");
+                    line.setText("Player found!", true);
+                    running = false;
                 }
             });
-            try {
-                Thread.sleep(1000);
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        line.setText("");
-                    }
-                });
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
 
         @Override
         public void run() {
-            this.running = true;
             while ( running ) {
                 try {
                     Thread.sleep(1000);
@@ -754,7 +806,7 @@ public class ClientController implements Initializable, EventHandler {
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
-                            line.setText("Searching for Players: " + String.format("%02d", min) + ":"+String.format("%02d", sec));
+                            line.setText("Searching for Players: " + String.format("%02d", min) + ":"+String.format("%02d", sec), false);
                         }
                     });
                 } catch (InterruptedException e) {
