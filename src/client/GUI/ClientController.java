@@ -86,6 +86,10 @@ public class ClientController implements Initializable, EventHandler {
     private Client c;
 
 
+    /**
+     * Setzt einen Text in die Commandline
+     * @param msg ist der Text
+     */
     public void setCommandLineText( String msg ) {
         Platform.runLater(new Runnable() {
             @Override
@@ -95,6 +99,9 @@ public class ClientController implements Initializable, EventHandler {
         });
     }
 
+    /**
+     * Wird aufgerufen wen man selbst auf bereit klickt, wenn der gegner ebenso bereit ist wird {@link #startGameBothReady()} aufgerufen
+     */
     private void startGame() {
         this.started = true;
 
@@ -112,6 +119,9 @@ public class ClientController implements Initializable, EventHandler {
         this.setOwnFieldColorDark();
     }
 
+    /**
+     * Setzt, das der gegner gestartet hat wenn man selbst auch bereit ist, wird {@link #startGameBothReady()} aufgerufen
+     */
     public void setEnmStarted() {
         this.startedEnm = true;
         if ( this.started ) {
@@ -119,6 +129,9 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
+    /**
+     * Startet das Spiel, wenn beide bereit sind
+     */
     public void startGameBothReady() {
         System.out.println("Game started");
 
@@ -142,6 +155,9 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
+    /**
+     * Setzt das Eigene Feld auf dunkel
+     */
     private void setOwnFieldColorDark() {
         for (Tile[] arr: this.ownClick) {
             for ( Tile tile: arr ) {
@@ -152,6 +168,9 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
+    /**
+     * Dreht die Farbe der Felder um, wird nach dem Start des Spiels aufgerufen
+     */
     private void switchFieldColors() {
         for (Tile[] arr: this.enmClick) {
             for ( Tile tile: arr) {
@@ -163,6 +182,10 @@ public class ClientController implements Initializable, EventHandler {
         this.setOwnFieldColorDark();
     }
 
+    /**
+     * Setzt ob der Gegner oder der eigene Spieler dran ist
+     * @param to wird auf true oder false gesetzt (true: gegner ist dran, false: du bist dran)
+     */
     public void setAlreadyHit( boolean to ) {
         if ( startedEnm && started ) {
             if (to) {
@@ -174,6 +197,9 @@ public class ClientController implements Initializable, EventHandler {
         this.model.setAlreadyHit(to);
     }
 
+    /**
+     * Setzt das der Server down ist. Spieler wird zum Start Fenster geleitet
+     */
     public void srvDisconnected() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("Start/start.fxml"));
@@ -192,6 +218,9 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
+    /**
+     * Setzt das der Gegner disconnected ist, spiel wird zurückgesetzt {@link #resetModel()}
+     */
     public void enmDisconnected() {
         this.resetModel();
         this.enmFound = false;
@@ -203,6 +232,9 @@ public class ClientController implements Initializable, EventHandler {
         deactivateAddShipField(ShipEnum.Kreuzer);
     }
 
+    /**
+     * Setzt das ein Gegner gefunden wurde, spiel kann beginnen
+     */
     public void foundEnm() {
         this.enmFound = true;
         this.closeCommandCounter();
@@ -212,7 +244,10 @@ public class ClientController implements Initializable, EventHandler {
         resetTile(ShipEnum.Kreuzer);
     }
 
-
+    /**
+     * Setzt ein Schiff des gegners
+     * @param text ist ein String wie !SHIP ....
+     */
     public void setEnmShip( String text) {
         if ( this.model.setEnmShip(text) ) {
             System.out.println("All Ships shiped");
@@ -220,6 +255,11 @@ public class ClientController implements Initializable, EventHandler {
     }
 
 
+    /**
+     * Wird aufgeruden wenn das eigene Feld angeklickt wird
+     * @param currentTile das Feld das geklickt wurde
+     * @param mouseEvent mouseEvent, mit dem überprüft wird, ob Links- oder Rechtsklick
+     */
     private void ownTileClicked( Tile currentTile, MouseEvent mouseEvent ) {
         if ( !started ) {
             System.out.println("Selected: " +actv);
@@ -281,7 +321,10 @@ public class ClientController implements Initializable, EventHandler {
 
     }
 
-
+    /**
+     * Wenn alle Schiffe gesetzt wurden, wird diese Methode aufgerufen. Deaktiviert die Tiles
+     * @param which welche Schiff Tiles
+     */
     private void deactivateAddShipField( ShipEnum which) {
         switch ( which ) {
             case Schlachtschiff:
@@ -307,6 +350,10 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
+    /**
+     * Setzt alle Tiles auf Dismissed
+     * @param which welche Schiff Tiles dismissed werden sollen
+     */
     private void resetTile( ShipEnum which ) {
         switch ( which ) {
             case Schlachtschiff:
@@ -332,6 +379,11 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
+    /**
+     * Setzt den Text einen Schiffes das man Plszieren kann neu
+     * @param which welches Schiff
+     * @param change ob eins gesetzt wurde (-1), oder ob es wieder gelöscht -> frei ist (1)
+     */
     private void resetText( ShipEnum which, int change ) {
         int anz = 0;
         switch ( which ) {
@@ -436,6 +488,10 @@ public class ClientController implements Initializable, EventHandler {
         this.enmFound = false;
     }
 
+    /**
+     * Setzt ein Feld auf hit, wird aufgerufen wenn der gegner einen Hit schickt über {@link Client}
+     * @param msg sieht flgendermaßen aus: "!HIT ture: 0, 2
+     */
     public void setTileHit( String msg ) {
         // !HIT true: 0, 2
         try {
@@ -457,6 +513,9 @@ public class ClientController implements Initializable, EventHandler {
     }
 
 
+    /**
+     * Wird aufgerufen wenn die view created wird. Erstellt alle GUI elemente
+     */
     private void createView() {
         LinkedList<Tile[][]> actionClickList = model.createContent(fieldEig, fieldEnm);
 
@@ -486,11 +545,17 @@ public class ClientController implements Initializable, EventHandler {
     }
 
 
-
+    /**
+     * Init methode um ein Callback an den {@link Client} zu setzen
+     * @param c Controller {@link Client}
+     */
     public void init(Client c){
         this.c = c;
     }
 
+    /**
+     * Standart initialize methode, werden ebenso startwerte und Elemente der GUI gesetzt
+     */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         model = new ClientModel();
@@ -554,6 +619,11 @@ public class ClientController implements Initializable, EventHandler {
         this.createView();
     }
 
+    /**
+     * Generiert die Tiles
+     * @param toAddGrid Grid zu dem die Tile geaddet werden
+     * @param toAdd ist das Array in das das Tile gesezt wird
+     */
     private void createTiles(GridPane toAddGrid, ShipAddTile[] toAdd ) {
         for ( int i = 0; i < toAdd.length; i++ ) {
             ShipAddTile newTile = new ShipAddTile();
@@ -565,6 +635,11 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
+    /**
+     * Nimmt einen Int wert entgegen
+     * @param id der int wert
+     * @return gibt das entsprechende {@link ShipEnum} const zurück
+     */
     private ShipEnum getEnumToId( int id ){
         ShipEnum out = ShipEnum.KeinBoot;
         switch (id ) {
@@ -586,6 +661,9 @@ public class ClientController implements Initializable, EventHandler {
         return out;
     }
 
+    /**
+     * Wird aufgerufen wenn man ein Schiff platzieren will und auf die Schiff Tiles klickt
+     */
     private void setActivated() {
         boolean setRed = true;
         boolean setWhite = false;
@@ -672,6 +750,10 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
+    /**
+     * Handelt die onclicks auf die Schiff tiles
+     * @param event Event des Onclicks
+     */
     @Override
     public void handle(Event event) {
         if ( !started && enmFound ) {
@@ -688,7 +770,10 @@ public class ClientController implements Initializable, EventHandler {
     }
 
 
-
+    /**
+     * Setzt die entsprechenden Schiff Tiles auf dismissed
+     * @param which welche Schiff tiles man dismissen will
+     */
     private void dismissActive( ShipEnum which ) {
         switch ( which ) {
             case Schlachtschiff:
@@ -724,6 +809,9 @@ public class ClientController implements Initializable, EventHandler {
 
     }
 
+    /**
+     * Setzt das Model und die GUI und den Startzustand
+     */
     private void resetModel() {
         this.started = false;
         this.enmFound = false;
@@ -747,6 +835,9 @@ public class ClientController implements Initializable, EventHandler {
         });
     }
 
+    /**
+     * Setzt den Counter für die Spielersuche auf stop
+     */
     public void closeCommandCounter() {
         this.commandLineCapsule.stop();
         this.counter.stop();
@@ -764,6 +855,9 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
+    /**
+     * Startet den Counter für die SPielersuche wieder
+     */
     public void startCommandCounterAgain() {
         System.out.println("Starting again");
         this.counter.startAgain();
@@ -776,6 +870,9 @@ public class ClientController implements Initializable, EventHandler {
     }
 
 
+    /**
+     * Counter für die Spielersuche
+     */
     class CommandCounter implements Runnable {
 
         private CommandLineCapsule line;
@@ -791,6 +888,9 @@ public class ClientController implements Initializable, EventHandler {
             sec = 0;
         }
 
+        /**
+         * Startet den Counter wieder
+         */
         public void startAgain() {
             Platform.runLater(new Runnable() {
                 @Override
@@ -800,6 +900,9 @@ public class ClientController implements Initializable, EventHandler {
             });
         }
 
+        /**
+         * Stopt den Couter
+         */
         public void stop() {
             this.running = false;
             this.line.stop();
@@ -812,6 +915,9 @@ public class ClientController implements Initializable, EventHandler {
             });
         }
 
+        /**
+         * Run methode, laufender Counter
+         */
         @Override
         public void run() {
             while ( running ) {
