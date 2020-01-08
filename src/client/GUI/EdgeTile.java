@@ -5,6 +5,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 
+/**
+ * Rand Tile die für die Nummerierung des Spielfelds zuständig sind 1-9 A-
+ */
 public class EdgeTile extends StackPane
 {
     private Text text = new Text();

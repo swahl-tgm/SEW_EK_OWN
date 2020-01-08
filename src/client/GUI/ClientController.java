@@ -68,8 +68,10 @@ public class ClientController implements Initializable, EventHandler {
     // Text
     private StackPane eigTextBase;
     private Text eigText;
+    private String name;
     private StackPane enmTextBase;
     private Text enmText;
+    private String enmName;
 
 
     private CommandLineCapsule commandLineCapsule;
@@ -242,6 +244,20 @@ public class ClientController implements Initializable, EventHandler {
         resetTile(ShipEnum.Schlachtschiff);
         resetTile(ShipEnum.Fragette);
         resetTile(ShipEnum.Kreuzer);
+    }
+
+    public void setEnmName(String name ) {
+        this.enmName = name;
+        this.enmText.setText(name + "'s Spielfeld");
+    }
+
+    public void setName ( String name ) {
+        this.name = name;
+        this.eigText.setText(name + "'s Spielfeld");
+    }
+
+    public String getName() {
+        return this.name;
     }
 
     /**
