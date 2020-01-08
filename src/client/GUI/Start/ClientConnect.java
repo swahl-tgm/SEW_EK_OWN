@@ -46,6 +46,9 @@ public class ClientConnect implements Initializable {
 
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
+    /**
+     * Ruft die 2 GUI auf, leitet den User vom "Startfenster" auf das "Spielfenster" weiter
+     */
     private void moveToField() {
         commandline.setText("");
         try {
@@ -118,6 +121,9 @@ public class ClientConnect implements Initializable {
         });
     }
 
+    /**
+     * @param text ist der Text der in die Commandline gesetzt wird
+     */
     public void initCommandLine(String text) {
         this.commandline.setText(text);
     }

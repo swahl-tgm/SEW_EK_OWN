@@ -9,4 +9,5 @@ public class MessageProtocol {
     public static final String NAMES = "!NAMES";
     public static final String ENMSET = "!ENMSET";
     public static final String ENMUNSET = "!ENMUNSET";
+    public static final String LOSE = "!LOSE";
 }

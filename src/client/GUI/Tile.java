@@ -126,6 +126,9 @@ public class Tile extends StackPane
         this.redBlockSet = readBlockSet;
     }
 
+    /**
+     * Setzt das Tile auf Rot (mit einem Fade ein)
+     */
     public void setRedBlock() {
         this.redBlockSet = true;
         FillTransition ft = new FillTransition(Duration.millis(300), border, Color.color(0.95,0.95,0.95), Color.color(1, 183.0/255,183.0/255));
@@ -134,6 +137,9 @@ public class Tile extends StackPane
         ft.play();
     }
 
+    /**
+     * Setzt das Tile von Rot auf nomal (mit einem Fade aus)
+     */
     public void resetRedBlock() {
         this.redBlockSet = false;
         FillTransition ft = new FillTransition(Duration.millis(300), border, Color.color(1, 183.0/255,183.0/255),  Color.color(0.95,0.95,0.95));
@@ -142,6 +148,9 @@ public class Tile extends StackPane
         ft.play();
     }
 
+    /**
+     * Setzt das Tile wieder auf normal
+     */
     public void setNormal() {
         this.redBlockSet = false;
         border.setStroke(Color.DARKGRAY);
@@ -167,14 +176,25 @@ public class Tile extends StackPane
         getChildren().addAll(border, text);
     }
 
+    /**
+     * Setzt das Tile auf Dunkel
+     */
     public void setDark() {
         border.setFill(Color.color(0.85,0.85,0.85));
     }
+
+    /**
+     * Setzt das Tile auf Hell
+     */
     public void setLight() {
         border.setFill(Color.color(0.95,0.95,0.95));
     }
 
 
+    /**
+     * Setzt das Tile auf Hit. Setzt in "X" in das Feld
+     * @param realHit wenn realHit true: "X" wird rot
+     */
     public void setHit( boolean realHit ) {
         if ( !this.isHasShip() ) {
             this.setDark();
@@ -189,6 +209,9 @@ public class Tile extends StackPane
         }
     }
 
+    /**
+     * Setzt das Feld auf ein dunkles Rot um ein komplett zerstörtes Schiff zu visualisieren
+     */
     public void setEndHit() {
         this.border.setFill(Color.color((float)80/255,0,0, 0.5));
     }

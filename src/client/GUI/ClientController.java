@@ -246,16 +246,27 @@ public class ClientController implements Initializable, EventHandler {
         resetTile(ShipEnum.Kreuzer);
     }
 
+    /**
+     * Setzt den Namen des Gegners in der GUI
+     * @param name name des Gegners
+     */
     public void setEnmName(String name ) {
         this.enmName = name;
         this.enmText.setText(name + "'s Spielfeld");
     }
 
+    /**
+     * Setzt den eigenen Namen in der GUI
+     * @param name Name
+     */
     public void setName ( String name ) {
         this.name = name;
         this.eigText.setText(name + "'s Spielfeld");
     }
 
+    /**
+     * @return den eigenen Namen
+     */
     public String getName() {
         return this.name;
     }
@@ -495,6 +506,21 @@ public class ClientController implements Initializable, EventHandler {
     }
 
     /**
+     * Setzt den lose
+     */
+    public void setLose() {
+        // damit keine züge mehr möglich sind
+        this.started = false;
+        this.enmFound = false;
+
+        // beide Felder grau
+        this.switchFieldColors();
+        this.setOwnFieldColorDark();
+
+        this.commandLineCapsule.setText("Du hast verloren! " + this.enmName + " hat gewonnen! Vielleich nächstes Mal :)", true);
+    }
+
+    /**
      * Wird aufgerufen wenn die win Bedingung erfüllt wurde
      * Leitet das auch an den gegner weiter
      */
@@ -502,6 +528,14 @@ public class ClientController implements Initializable, EventHandler {
         // damit keine züge mehr möglich sind
         this.started = false;
         this.enmFound = false;
+
+        // beide Felder grau
+        this.switchFieldColors();
+        this.setOwnFieldColorDark();
+
+        this.commandLineCapsule.setText(this.name + " hast gewonnen!!!", true);
+
+        this.c.send(MessageProtocol.LOSE);
     }
 
     /**
@@ -513,7 +547,7 @@ public class ClientController implements Initializable, EventHandler {
         try {
             int x = Integer.parseInt(msg.substring(msg.indexOf(":")+2,msg.indexOf(",")));
             int y = Integer.parseInt(msg.substring(msg.indexOf(",")+2));
-            String trueHitString = msg.substring(msg.indexOf(" ")+1, msg.indexOf(":")-1);
+            String trueHitString = msg.substring(msg.indexOf(" ")+1, msg.indexOf(":"));
             boolean trueHit = false;
             if ( trueHitString.equals("true") ) {
                 trueHit = true;

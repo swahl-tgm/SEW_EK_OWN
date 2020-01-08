@@ -29,11 +29,10 @@ public class Server {
         this.listen();
     }
 
-    public void shutdown() {
-        this.lis = false;
-        // kommt noch mehr 
-    }
-
+    /**
+     * Entfernt einen {@link SlaveWorker} aus der Liste {@link #userList} sowie {@link #userMatchedList}
+     * @param worker ist der Worker der entfernt wird
+     */
     public void remove( SlaveWorker worker ) {
         SlaveWorker enm = worker.getEnm();
         userList.remove(worker.getName());
@@ -46,6 +45,9 @@ public class Server {
     }
 
 
+    /**
+     * "Run" Methode des Server, hört dauerhaft nach ankommenten Clients
+     */
     public void listen() {
         try {
             serverSocket = new ServerSocket(port);
@@ -70,6 +72,11 @@ public class Server {
         }
     }
 
+    /**
+     * Matched zwei Clients zusammen um ein SPiel zu beginnen
+     * @param toMatch ist der SlaveWorker der mit einem anderen gematched wird
+     * @return ture wenn erforgleich, false wenn nicht
+     */
     synchronized private boolean matchSlaveWorker(SlaveWorker toMatch) {
         try {
             Thread.sleep(1000);

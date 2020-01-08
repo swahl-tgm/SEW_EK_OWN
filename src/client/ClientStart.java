@@ -7,6 +7,11 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class ClientStart extends Application {
+    /**
+     * Startet die Application und führt die "Start"-Fenster aus
+     * @param stage
+     * @throws Exception
+     */
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("GUI/Start/start.fxml"));

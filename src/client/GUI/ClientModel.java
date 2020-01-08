@@ -142,9 +142,9 @@ public class ClientModel
 
     /**
      * Hit eigenes Feld
-     * @param x
-     * @param y
-     * @param trueHit
+     * @param x x wert
+     * @param y y wert
+     * @param trueHit ob true hit oder nicht
      */
     public void setOwnTileHit( int x, int y, boolean trueHit ) {
         this.alreadyHit = false;
@@ -164,9 +164,9 @@ public class ClientModel
 
     /**
      * Hit gegner Feld
-     * @param x
-     * @param y
-     * @return
+     * @param x x wert
+     * @param y x wert
+     * @return ob true hit oder nicht
      */
     public boolean setEnmTileHit( int x, int y ) {
         this.alreadyHit = true;
@@ -257,7 +257,8 @@ public class ClientModel
                     }
                 }
                 if ( allHit ) {
-                    for ( int i = currentShip.getStartY(); i <= currentShip.getEndY(); i++ ) {
+                    currentShip.setDestroyed(true);
+                    for ( int i = currentShip.getStartX(); i <= currentShip.getEndX(); i++ ) {
                         arr[i-1][currentShip.getStartY()-1].setEndHit();
                     }
                 }
@@ -293,7 +294,7 @@ public class ClientModel
                 // horizontal
                 // important: x!
                 if ( y ==  ship.getStartY() ) {
-                    for (int i = ship.getStartX(); i < ship.getEndX(); i++ ) {
+                    for (int i = ship.getStartX(); i <= ship.getEndX(); i++ ) {
                         if ( i == x ) {
                             // hit
                             return true;

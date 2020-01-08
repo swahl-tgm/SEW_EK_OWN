@@ -2,6 +2,10 @@ package client.GUI;
 
 import javafx.scene.layout.StackPane;
 
+/**
+ * Ship Überklasse
+ * Beinhaltet alle notwendigen Attr für die verschiednenen Schiffe
+ */
 public class Ship
 {
     private int length;
@@ -13,6 +17,8 @@ public class Ship
 
     private boolean isDestroyed;
     private boolean isPlaced;
+
+    // Setter / Getter
 
     public int getLength() {
         return length;

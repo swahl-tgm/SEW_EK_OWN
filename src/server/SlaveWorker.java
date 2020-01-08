@@ -23,6 +23,7 @@ public class SlaveWorker implements Runnable {
 
     private String name;
 
+    // Setter / Getter
     public String getName() {
         return name;
     }
@@ -35,6 +36,10 @@ public class SlaveWorker implements Runnable {
         this.name = name;
     }
 
+    /**
+     * Setzt den Gegner. Einen {@link SlaveWorker} um einfach mit dem anderen Client kommunizieren zu können
+     * @param enm ist der andere SlaveWorker
+     */
     public void setEnm( SlaveWorker enm) {
         this.enm = enm;
         if ( enm != null) {
@@ -45,10 +50,16 @@ public class SlaveWorker implements Runnable {
         }
     }
 
+    /**
+     * @return Gibt den {@link SlaveWorker} des gegners zurück
+     */
     public SlaveWorker getEnm() {
         return this.enm;
     }
 
+    /**
+     * Fährt den ServiceWorker herrunter
+     */
     private void shutdown() {
         try {
             this.listening = false;
@@ -61,18 +72,24 @@ public class SlaveWorker implements Runnable {
 
     }
 
+    /**
+     * Sendet ein {@link MessageProtocol#READY} an den Client
+     */
     private void sendReady() {
         this.out.println(MessageProtocol.READY);
     }
 
+    /**
+     * Sendet eine Nachricht an den Client
+     * @param msg Nachricht
+     */
     private void send( String msg) {
         this.out.println(msg);
     }
 
-    private void sendShip(String ship ) {
-        this.out.println(ship);
-    }
-
+    /**
+     * Wird ausgeführt während der SlaveWorker läuft, reagiert auf Befehele und leitet diese an den Client weiter
+     */
     @Override
     public void run() {
         try {
@@ -104,10 +121,13 @@ public class SlaveWorker implements Runnable {
                             this.shutdown();
                             break;
                         case MessageProtocol.SHIP:
-                            this.enm.sendShip(msg);
+                            this.enm.send(msg);
                             break;
                         case MessageProtocol.NAMES:
-                            this.enm.out.println(msg);
+                            this.enm.send(msg);
+                            break;
+                        case MessageProtocol.LOSE:
+                            this.enm.send(msg);
                             break;
                     }
                     System.out.println(msg);

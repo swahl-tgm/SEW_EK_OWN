@@ -35,12 +35,18 @@ public class Client implements Runnable {
         listening = false;
     }
 
+    /**
+     * Setzt den Namen des Clients
+     * @param name ist der Name
+     */
     public void setName(String name ) {
         this.name = name;
         this.c.setName(name);
     }
 
-
+    /**
+     * Fährt den Client herrunter
+     */
     public void shutdown() {
         if ( listening ) {
             try {
@@ -55,11 +61,18 @@ public class Client implements Runnable {
         }
     }
 
+    /**
+     * Sendet eine Message an der Server
+     * @param msg ist die Nachricht
+     */
     public void send( String msg) {
         this.out.println(msg);
     }
 
 
+    /**
+     * Wird ausgeführt wenn der Client läuft
+     */
     @Override
     public void run() {
         listening = true;
@@ -100,6 +113,9 @@ public class Client implements Runnable {
                         break;
                     case MessageProtocol.NAMES:
                         this.c.setEnmName(msg.substring(msg.indexOf(" ")+1));
+                        break;
+                    case MessageProtocol.LOSE:
+                        this.c.setLose();
                         break;
                 }
             }
