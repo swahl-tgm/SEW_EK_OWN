@@ -95,6 +95,9 @@ public class ClientModel
         return out;
     }
 
+    /**
+     * @return gibt ein Array mit String für jedes Schiff zurück {@link #getShipsToStringSing()}
+     */
     public String[] getShipsToString() {
         String[] out = new String[10];
 
@@ -109,14 +112,40 @@ public class ClientModel
         return out;
     }
 
+    /**
+     * @param ship
+     * @return gibt den String für ein Schiff zurück, dieser String wird dann von Client weiter geschickt
+     */
     private String getShipsToStringSing(Ship ship) {
         return MessageProtocol.SHIP + " " + ship.getClass() + ": " + ship.getStartX() + ", " + ship.getStartY() + "; " + ship.getEndX() + ", " + ship.getEndY();
     }
 
+    /**
+     * @return Gibt true zurück wenn alle Schiffe des Gegners zerstört sind
+     */
+    public boolean checkAllShipDestroyed() {
+        for (Ship[] arr: this.enmShips) {
+            for (Ship ship: arr) {
+                if ( !ship.isDestroyed() ) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Hit eigenes Feld
+     * @param x
+     * @param y
+     * @param trueHit
+     */
     public void setOwnTileHit( int x, int y, boolean trueHit ) {
         this.alreadyHit = false;
         this.actualGridEig[x-1][y-1].setHit(trueHit);
-        System.out.println("Hit from enm, set already hit to false");
+        if ( trueHit ) {
+            checkIfHoleShipHit(x,y, this.actualGridEig, true);
+        }
     }
 
     public boolean getAlreadyHit() {
@@ -127,13 +156,94 @@ public class ClientModel
         this.alreadyHit = to;
     }
 
+    /**
+     * Hit gegner Feld
+     * @param x
+     * @param y
+     * @return
+     */
     public boolean setEnmTileHit( int x, int y ) {
         this.alreadyHit = true;
-        System.out.println("Hit from enm, set already hit to false");
         boolean trueHit = checkIfOnEnmField(x,y);
         System.out.println(trueHit);
         this.actualGridEnm[x-1][y-1].setHit(trueHit);
+        if ( trueHit ) {
+            // check if hole ship hit
+            checkIfHoleShipHit(x,y, this.actualGridEnm, false);
+        }
         return trueHit;
+    }
+
+    private Ship getShipFromCord( int x, int y,  Ship[][] shipsArr ) {
+        for (Ship[] arr: shipsArr) {
+            for (Ship ship: arr) {
+                int startX = ship.getStartX();
+                if ( startX == ship.getEndX() ) {
+                    if ( startX == x ) {
+                        // vertical
+                        for ( int i = ship.getStartY(); i <= ship.getEndY(); i++ ) {
+                            if ( i == y ) {
+                                return ship;
+                            }
+                        }
+                    }
+                }
+                else {
+                    // horizontal
+                    if ( ship.getStartY() == y ) {
+                        for ( int i = ship.getStartX(); i <= ship.getEndX(); i++ ) {
+                            if ( i == x ) {
+                                return ship;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private void checkIfHoleShipHit( int x, int y, Tile[][] arr, boolean own ) {
+        Ship currentShip;
+        if ( !own ) {
+            currentShip = this.getShipFromCord(x,y, this.enmShips);
+        }
+        else
+        {
+            currentShip = this.getShipFromCord(x,y, this.ships);
+        }
+        boolean allHit = true;
+        if ( currentShip != null ) {
+            int startX = currentShip.getStartX();
+            if ( startX == currentShip.getEndX() ) {
+                // vertical
+                for ( int i = currentShip.getStartY(); i <= currentShip.getEndY(); i++ ) {
+                    if ( !arr[startX-1][i-1].isAlreadyHit() )  {
+                        allHit = false;
+                    }
+                }
+                if ( allHit ) {
+                    currentShip.setDestroyed(true);
+                    for ( int i = currentShip.getStartY(); i <= currentShip.getEndY(); i++ ) {
+                        arr[startX-1][i-1].setEndHit();
+                    }
+                }
+            }
+            else
+            {
+                // hoizontal
+                for ( int i = currentShip.getStartX(); i <= currentShip.getEndX(); i++ ) {
+                    if ( !arr[i-1][currentShip.getStartY()-1].isAlreadyHit() )  {
+                        allHit = false;
+                    }
+                }
+                if ( allHit ) {
+                    for ( int i = currentShip.getStartY(); i <= currentShip.getEndY(); i++ ) {
+                        arr[i-1][currentShip.getStartY()-1].setEndHit();
+                    }
+                }
+            }
+        }
     }
 
     private boolean checkIfOnField( int x, int y, Ship[] arr ) {

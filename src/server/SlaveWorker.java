@@ -96,6 +96,7 @@ public class SlaveWorker implements Runnable {
                             break;
                         case MessageProtocol.HIT:
                             this.enm.send(msg);
+                            break;
                         case MessageProtocol.READY:
                             this.enm.sendReady();
                             break;
@@ -104,6 +105,9 @@ public class SlaveWorker implements Runnable {
                             break;
                         case MessageProtocol.SHIP:
                             this.enm.sendShip(msg);
+                            break;
+                        case MessageProtocol.NAMES:
+                            this.enm.out.println(msg);
                             break;
                     }
                     System.out.println(msg);

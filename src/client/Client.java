@@ -29,6 +29,7 @@ public class Client implements Runnable {
         this.host = Objects.requireNonNullElse(host, "localhost");
         this.port = Objects.requireNonNullElse(port, 5050);
         this.c = c;
+        this.name = "";
 
         socket = new Socket(this.host, this.port);
         listening = false;
@@ -36,6 +37,7 @@ public class Client implements Runnable {
 
     public void setName(String name ) {
         this.name = name;
+        this.c.setName(name);
     }
 
 
@@ -88,12 +90,16 @@ public class Client implements Runnable {
                         break;
                     case MessageProtocol.ENMSET:
                         this.c.foundEnm();
+                        this.out.println(MessageProtocol.NAMES + " " + this.c.getName());
                         break;
                     case MessageProtocol.ENMUNSET:
                         this.c.enmDisconnected();
                         break;
                     case MessageProtocol.FIRST:
                         this.c.setAlreadyHit(true);
+                        break;
+                    case MessageProtocol.NAMES:
+                        this.c.setEnmName(msg.substring(msg.indexOf(" ")+1));
                         break;
                 }
             }

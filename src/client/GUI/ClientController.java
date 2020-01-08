@@ -396,6 +396,10 @@ public class ClientController implements Initializable, EventHandler {
         }
     }
 
+    /**
+     * Wird aufgerufen wenn das Feld das Gegners angeklickt wird
+     * @param currentTile Tile angeklickt wurde
+     */
     private void enmTileClicked( Tile currentTile ) {
         if ( started && startedEnm ) {
             System.out.println("Already Hit: " + !this.model.getAlreadyHit());
@@ -409,12 +413,27 @@ public class ClientController implements Initializable, EventHandler {
                 boolean trueHit = this.model.setEnmTileHit(x,y);
                 this.c.send(MessageProtocol.HIT + " " + trueHit + ": " + x + ", " + y);
                 this.setCommandLineText("Your enemies turn");
+
+                if ( this.model.checkAllShipDestroyed()) {
+                    // gewonnen
+                    this.setWin();
+                }
             }
         }
         else {
             System.out.println("Not your turn!");
         }
 
+    }
+
+    /**
+     * Wird aufgerufen wenn die win Bedingung erfüllt wurde
+     * Leitet das auch an den gegner weiter
+     */
+    private void setWin() {
+        // damit keine züge mehr möglich sind
+        this.started = false;
+        this.enmFound = false;
     }
 
     public void setTileHit( String msg ) {

@@ -154,6 +154,7 @@ public class Tile extends StackPane
         this.hasShip = hasShip;
         this.nextTile = null;
         this.beforeTile = null;
+        this.alreadyHit = false;
         this.shipArrayIndex = -1;
         border.setStroke(Color.DARKGRAY);
         if ( isEnm ) {
@@ -175,13 +176,20 @@ public class Tile extends StackPane
 
 
     public void setHit( boolean realHit ) {
-        this.setDark();
+        if ( !this.isHasShip() ) {
+            this.setDark();
+        }
         this.text.setText("X");
+        this.alreadyHit = true;
         if ( realHit ) {
             this.text.setFill(Color.color(1,0,0));
         }
         else {
             this.text.setFill(Color.color(0,0,0));
         }
+    }
+
+    public void setEndHit() {
+        this.border.setFill(Color.color((float)80/255,0,0, 0.5));
     }
 }
