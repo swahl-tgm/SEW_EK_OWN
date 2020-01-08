@@ -33,6 +33,7 @@ public class ClientModel
     private Tile[][] actualGridEig;
     private Tile[][] actualGridEnm;
 
+    // Setter / Getter
     public boolean isTurning() {
         return turning;
     }
@@ -84,6 +85,11 @@ public class ClientModel
         return out;
     }
 
+    /**
+     * Wird aufgerufen um ein Schiff zu plazieren, aktiviert das letzte in dem array arr
+     * @param arr ist das Array
+     * @return true wenn der Vorgang funktioniet hat, false wenn anders
+     */
     private boolean activeLastOne( Ship[] arr ) {
         boolean out = false;
         for (int i = 0; i < arr.length; i++ ) {
@@ -96,7 +102,7 @@ public class ClientModel
     }
 
     /**
-     * @return gibt ein Array mit String für jedes Schiff zurück {@link #getShipsToStringSing()}
+     * @return gibt ein Array mit String für jedes Schiff zurück {@link #getShipsToStringSing(Ship)} )}
      */
     public String[] getShipsToString() {
         String[] out = new String[10];
@@ -113,7 +119,7 @@ public class ClientModel
     }
 
     /**
-     * @param ship
+     * @param ship ist das Schiff das in einen String umgewandelt wird
      * @return gibt den String für ein Schiff zurück, dieser String wird dann von Client weiter geschickt
      */
     private String getShipsToStringSing(Ship ship) {
@@ -174,6 +180,12 @@ public class ClientModel
         return trueHit;
     }
 
+    /**
+     * @param x x wert
+     * @param y y wert
+     * @param shipsArr ist das Array mit allen Schiffen
+     * @return Gibt ein Ship von den bekommenen Kordinaten zurück
+     */
     private Ship getShipFromCord( int x, int y,  Ship[][] shipsArr ) {
         for (Ship[] arr: shipsArr) {
             for (Ship ship: arr) {
@@ -203,6 +215,13 @@ public class ClientModel
         return null;
     }
 
+    /**
+     * Schaut ob ein ganzes Schiff zerstört ist, wenn ja werden dessen Tiles besonders markiert
+     * @param x x wert
+     * @param y y wert
+     * @param arr Array der Tiles
+     * @param own ob es sich um die Eigenen Schiffe oder die des Gegners Handelt
+     */
     private void checkIfHoleShipHit( int x, int y, Tile[][] arr, boolean own ) {
         Ship currentShip;
         if ( !own ) {
@@ -246,6 +265,13 @@ public class ClientModel
         }
     }
 
+    /**
+     * Schaut ob ein Schiff auf dem Feld ist
+     * @param x x wert
+     * @param y y wert
+     * @param arr Array der Schifft
+     * @return true wenn ja, false wenn nein
+     */
     private boolean checkIfOnField( int x, int y, Ship[] arr ) {
         for (Ship ship: arr) {
             int startX = ship.getStartX();
@@ -279,6 +305,11 @@ public class ClientModel
         return false;
     }
 
+    /**
+     * @param x x wert
+     * @param y y wert
+     * @return {@link #checkIfOnField(int, int, Ship[])}
+     */
     private boolean checkIfOnEnmField( int x, int y ) {
         for (Ship[] arr: this.enmShips) {
             if ( checkIfOnField(x,y, arr) ) {
@@ -288,6 +319,11 @@ public class ClientModel
         return false;
     }
 
+    /**
+     * Setzt ein Schiff des Gegners in das eigene Array
+     * @param text ist ein String nach "!SHIP Klasse: " + ship.getStartX() + ", " + ship.getStartY() + "; " + ship.getEndX() + ", " + ship.getEndY()
+     * @return true wenn alle Schiffe hinzugefügt wurden
+     */
     public boolean setEnmShip( String text) {
         // Aufgebaut nach: "!SHIP Klasse: " + ship.getStartX() + ", " + ship.getStartY() + "; " + ship.getEndX() + ", " + ship.getEndY();
         System.out.println("Text: " +text);
@@ -338,6 +374,10 @@ public class ClientModel
         return false;
     }
 
+    /**
+     * Schaut ob alle Schiffe des gegners Plaziert sind
+     * @return true wenn ja, false wenn nein
+     */
     private boolean checkEnmShipAll()  {
         for (Ship[] shipArr: this.enmShips) {
             for (Ship ship: shipArr) {
@@ -350,7 +390,9 @@ public class ClientModel
     }
 
 
-
+    /**
+     * Konstruktor
+     */
     public ClientModel() {
         this.copy = -1;
         ships = new Ship[4][];
@@ -374,7 +416,9 @@ public class ClientModel
         turning = false;
     }
 
-
+    /**
+     * Restets die Values des Models
+     */
     public void resetValues() {
         this.copy = -1;
         ships = new Ship[4][];
@@ -523,6 +567,9 @@ public class ClientModel
         }
     }
 
+    /**
+     * Setzt die roten Ränder der Schiffe beim Drehen
+     */
     private void borderTurn() {
         this.setShipsBorder(true);
         try {
@@ -533,6 +580,9 @@ public class ClientModel
         this.setShipsBorder(false);
     }
 
+    /**
+     * Löscht alle roten Ränder um die Schiffe
+     */
     public void cleanGridFromRed() {
         for ( int i = 0; i < 10; i++ ) {
             for ( int j = 0; j < 10; j++ ) {
@@ -543,6 +593,10 @@ public class ClientModel
         }
     }
 
+    /**
+     * Checkt ob alle eigenen Schiffe Plaziert sind
+     * @return true wenn ja, false wenn nein
+     */
     public boolean allShipsPlaced() {
         for (Ship[] ship : this.ships) {
             for (Ship shipSing : ship) {
@@ -554,6 +608,10 @@ public class ClientModel
         return true;
     }
 
+    /**
+     * Setzt die Ränder der Schiffe
+     * @param red wenn true ja rot, wenn false löscht es sie wieder
+     */
     public void setShipsBorder( boolean red ) {
         if ( firstShipAdded) {
             for ( Ship[] shipsArr: this.ships) {
@@ -698,6 +756,13 @@ public class ClientModel
         }
     }
 
+    /**
+     * Schaut ob Frei ist
+     * @param leftTile ist das linkeste Tile
+     * @param len die länge des Schiffes
+     * @param orientation (horizontal = {@link ClientModel#HORIZONTAL} | hertivel = {@link ClientModel#VERTICAL}
+     * @return true wenn frei, false wenn nicht
+     */
     private boolean checkFree( Tile leftTile, int len, int orientation ) {
         boolean out = true;
         if ( orientation == HORIZONTAL ) {
@@ -761,6 +826,11 @@ public class ClientModel
         return out;
     }
 
+    /**
+     * Löscht ein Schiff von dem Feld
+     * @param currentTile Feld auf dem sich das Schiff befindet
+     * @return welches Schiff entfernt wurde {@link ShipEnum}
+     */
     public ShipEnum removeShip( Tile currentTile ) {
         Tile leftTile = find(0, currentTile);
         int index = leftTile.getShipArrayIndex();
@@ -793,6 +863,13 @@ public class ClientModel
         return null;
     }
 
+    /**
+     * Fügt ein Schiff hinzuf
+     * @param which {@link ShipEnum} welches Schiff
+     * @param x x wert
+     * @param y y wert
+     * @return true wenns funktioniert hat, false wenn nicht
+     */
     public boolean addShip( ShipEnum which, int x, int y ) {
         int len = 0;
         int ship = 0;
@@ -825,6 +902,16 @@ public class ClientModel
         }
     }
 
+    /**
+     * Setzt für ein Schiff die Koordinaten
+     * @param arr Array für die Schiffe
+     * @param x x wert
+     * @param y y wert
+     * @param endX xEnd wert
+     * @param endY yEnd Wert
+     * @param len länge des Schiffes
+     * @return true wenn erfolgreich, false wenn nicht
+     */
     private boolean setShipCord ( Ship[] arr, int x, int y, int endX, int endY, int len) {
         Ship toEdit = null;
         int ind = 0;
@@ -872,6 +959,15 @@ public class ClientModel
 
     }
 
+    /**
+     * CHeckt ob beim hinzufügn genügen freue Felder vorhanden sind
+     * @param startX startX
+     * @param startY startY
+     * @param endX endX
+     * @param endY endY
+     * @param len Länge des Schiffs
+     * @return true wenn ja, false wenn nicht
+     */
     private boolean checkAddFree(int startX, int startY, int endX, int endY, int len) {
         int orientation;
         boolean out = true;
@@ -898,6 +994,9 @@ public class ClientModel
         return out;
     }
 
+    /**
+     * Generiert leere Schiffe, die nicht plaziert sind um das Array zu füllen
+     */
     private void createShips() {
         this.ships[0][0] = new Schlachtschiff(0,0,0,0);
         this.enmShips[0][0] = new Schlachtschiff(0,0,0,0);
@@ -915,7 +1014,12 @@ public class ClientModel
         }
     }
 
-
+    /**
+     * Generiet die Tiles
+     * @param fieldEig eigenes Feld
+     * @param fieldEnm Feld des Gegners
+     * @return eine Liste mit 2 Arrays, 2 * Tiles[][] (eigenes Feld, gegner Feld)
+     */
     public LinkedList<Tile[][]> createContent(GridPane fieldEig, GridPane fieldEnm ) {
         LinkedList<Tile[][]> out = new LinkedList<>();
 
